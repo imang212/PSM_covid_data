@@ -30,21 +30,20 @@ seasonal <- 50 * sin(2 * pi * as.numeric(dates) / 365.25) + 30 * sin(2 * pi * as
 new_cases <- pmax(0, trend + seasonal + rnorm(n, 0, 20))
 
 # Další proměnné
-new_deaths <- new_cases * 0.02 + rnorm(n, 0, 2)
-new_deaths <- pmax(0, new_deaths)
+new_deaths <- new_cases * 0.02 + rnorm(n, 0, 2); new_deaths <- pmax(0, new_deaths)
 
 stringency_index <- 30 + 40 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 5)
 stringency_index <- pmin(100, pmax(0, stringency_index))
 
-hosp_patients <- new_cases * 0.15 + rnorm(n, 0, 5)
-hosp_patients <- pmax(0, hosp_patients)
+hosp_patients <- new_cases * 0.15 + rnorm(n, 0, 5); hosp_patients <- pmax(0, hosp_patients)
 
 data <- data.frame(date = dates, location = "Czech Republic", new_cases = new_cases, new_deaths = new_deaths, stringency_index = stringency_index, hosp_patients = hosp_patients, total_cases = cumsum(new_cases), reproduction_rate = 1 + 0.3 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 0.1))
 
 # Převod na časovou řadu
 ts_data <- ts(data$new_cases, start = c(2020, 1), frequency = 365.25)
 head(data)
-
+######################################################################
+##Grafické zobrazení řady
 # Grafické zobrazení hlavní řady
 p1 <- ggplot(data, aes(x = date, y = new_cases)) +
   geom_line(color = "steelblue", alpha = 0.7) +
@@ -65,48 +64,81 @@ p2 <- ggplot(data, aes(x = month, y = new_cases)) +
 
 grid.arrange(p1, p2, ncol = 1)
 
+##Dekompozice časové řady
 # STL dekompozice
 stl_decomp <- stl(ts_data, s.window = "periodic", t.window = 365)
 plot(stl_decomp, main = "STL dekompozice časové řady nových případů")
-
+#########################################################################
+##Identifikace trendu pomocí vyhlazení
 # Klouzavé průměry různých řádů
 ma_7 <- SMA(data$new_cases, n = 7)   
 ma_30 <- SMA(data$new_cases, n = 30) 
 ma_365 <- SMA(data$new_cases, n = 365) 
 
-# Exponenciální vyrovnání
-exp_smooth <- HoltWinters(ts_data, gamma = FALSE)
+# Exponenciální vyrovnání - jednodušší přístup
+exp_smooth_model <- HoltWinters(ts_data, gamma = FALSE)
 
-# Zajistíme stejnou délku všech vektorů
+# Vytvoříme jednoduché exponenciální vyhlazení pomocí ETS
+ets_model <- ets(ts_data, model = "AAN", damped = FALSE)
+exp_smooth_fitted <- fitted(ets_model)
+
+# Zajistíme stejnou délku (ETS vrací stejnou délku jako originální data)
 n_obs <- length(data$new_cases)
-fitted_values <- fitted(exp_smooth)
 
-# Pokud má fitted jiný začátek, vyplníme NA
-exp_smooth_full <- rep(NA, n_obs)
-start_idx <- length(data$new_cases) - length(fitted_values) + 1
-exp_smooth_full[start_idx:n_obs] <- as.numeric(fitted_values[,1])
+# Pokud je exp_smooth_fitted kratší, doplníme NA na začátek
+if(length(exp_smooth_fitted) < n_obs) {
+  exp_smooth_full <- c(rep(NA, n_obs - length(exp_smooth_fitted)), 
+                       as.numeric(exp_smooth_fitted))
+} else {
+  exp_smooth_full <- as.numeric(exp_smooth_fitted[1:n_obs])
+}
 
-# Grafické srovnání
-trend_data <- data.frame(date = data$date, original = data$new_cases, ma_7 = ma_7, ma_30 = ma_30, ma_365 = ma_365, exp_smooth = exp_smooth_full)
+# Grafické srovnání - pouze metody, které máme
+trend_data <- data.frame(
+  date = data$date,
+  original = data$new_cases,
+  ma_7 = ma_7,
+  ma_30 = ma_30
+)
+
+# Přidáme ma_365 pouze pokud má dostatek dat
+if(sum(!is.na(ma_365)) > 100) {
+  trend_data$ma_365 <- ma_365
+}
+
+# Přidáme exponenciální vyhlazení
+trend_data$exp_smooth <- exp_smooth_full
 
 trend_plot <- trend_data %>%
   pivot_longer(cols = -date, names_to = "method", values_to = "value") %>%
+  filter(!is.na(value)) %>%  # Odfiltrujeme NA hodnoty
   ggplot(aes(x = date, y = value, color = method)) +
-  geom_line(alpha = 0.7) +
-  scale_color_manual(values = c("original" = "gray", "ma_7" = "blue", 
+  geom_line(alpha = 0.7, size = 0.8) +
+  scale_color_manual(values = c("original" = "gray50", "ma_7" = "blue", 
                                 "ma_30" = "green", "ma_365" = "red",
-                                "exp_smooth" = "purple")) +
+                                "exp_smooth" = "purple"),
+                     name = "Metoda",
+                     labels = c("original" = "Originální data", 
+                                "ma_7" = "MA(7)", "ma_30" = "MA(30)", 
+                                "ma_365" = "MA(365)", "exp_smooth" = "Exp. vyhlazení")) +
   labs(title = "Srovnání metod vyhlazení trendu",
-       x = "Datum", y = "Hodnota",
-       color = "Metoda") +
-  theme_minimal()
+       x = "Datum", y = "Hodnota") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
 print(trend_plot)
 
 # Analýza trendové složky
 trend_component <- stl_decomp$time.series[,"trend"]
-summary(trend_component)
+cat("Souhrn trendové složky:\n")
+print(summary(trend_component))
 
+# Analýza sezónní složky
+seasonal_component <- stl_decomp$time.series[,"seasonal"]
+cat("\nSouhrn sezónní složky:\n")
+print(summary(seasonal_component))
+##############################################################################
+##Hledání optimálního funkčního modelu
 # Příprava dat pro regresní model
 data$t <- 1:nrow(data)
 data$sin_365 <- sin(2 * pi * data$t / 365.25)
@@ -116,16 +148,12 @@ data$cos_7 <- cos(2 * pi * data$t / 7)
 
 # Model 1: Lineární trend + roční sezónnost
 model1 <- lm(new_cases ~ t + sin_365 + cos_365, data = data)
-
 # Model 2: Polynomiální trend + roční sezónnost
 model2 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365, data = data)
-
 # Model 3: Lineární trend + roční + týdenní sezónnost
 model3 <- lm(new_cases ~ t + sin_365 + cos_365 + sin_7 + cos_7, data = data)
-
 # Model 4: Polynomiální trend + roční + týdenní sezónnost
 model4 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365 + sin_7 + cos_7, data = data)
-
 # Srovnání modelů
 models <- list(model1, model2, model3, model4)
 model_names <- c("Lin+Roční", "Poly+Roční", "Lin+Roční+Týdenní", "Poly+Roční+Týdenní")
@@ -152,12 +180,11 @@ ggplot(data, aes(x = date)) +
        x = "Datum", y = "Počet případů",
        subtitle = paste("Model:", model_names[which.min(comparison$AIC)])) +
   theme_minimal()
-
-
+###############################################################################
+##Hledání optimálního SARIMA modelu
 # Kontrola stacionarity
 adf_test <- adf.test(ts_data)
 print(paste("ADF test p-hodnota:", round(adf_test$p.value, 4)))
-
 # KPSS test stacionarity
 kpss_test <- kpss.test(ts_data)
 print(paste("KPSS test p-hodnota:", round(kpss_test$p.value, 4)))
@@ -180,51 +207,31 @@ if(adf_test$p.value > 0.05) {
   ts_diff <- ts_data
 }
 
-# Automatické hledání SARIMA modelu
-auto_sarima <- auto.arima(ts_data, seasonal = TRUE, stepwise = FALSE, 
-                          approximation = FALSE, trace = TRUE)
-print(summary(auto_sarima))
+cat("Testování vybraných SARIMA kombinací...\n")
 
-# Manuální testování několika SARIMA modelů
-sarima_models <- list()
-aic_values <- c()
+# Vybrané rozumné kombinace na základě ACF/PACF a zkušeností
+(fit1 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(0,1,0))))
+(fit2 <- Arima(ts_data, order = c(0,0,1), seasonal = list(order = c(0,1,0))))
+(fit3 <- Arima(ts_data, order = c(1,0,1), seasonal = list(order = c(0,1,0))))
+(fit4 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,0))))
+(fit5 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(0,1,1))))
+(fit6 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,1))))
+(fit7 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(1,1,1))))
+BIC(fit1); BIC(fit2); BIC(fit3); BIC(fit4); BIC(fit5); BIC(fit6); BIC(fit7)
 
-# Možné kombinace parametrů
-params <- expand.grid(p = 0:2, d = 0:1, q = 0:2, 
-                      P = 0:2, D = 0:1, Q = 0:2)
-params <- params[params$d + params$D <= 2, ]  # omezení na rozumné diferenciace
-
-# Testování prvních 20 kombinací (pro časové důvody)
-for(i in 1:min(20, nrow(params))) {
-  tryCatch({
-    model <- arima(ts_data, order = c(params$p[i], params$d[i], params$q[i]),
-                   seasonal = list(order = c(params$P[i], params$D[i], params$Q[i]), 
-                                   period = 365))
-    sarima_models[[i]] <- model
-    aic_values[i] <- AIC(model)
-  }, error = function(e) {
-    aic_values[i] <- NA
-  })
-}
-
-# Nejlepší model
-best_idx <- which.min(aic_values)
-if(length(best_idx) > 0 && !is.na(best_idx)) {
-  manual_best_sarima <- sarima_models[[best_idx]]
-  print(paste("Nejlepší manuální SARIMA: ARIMA", 
-              paste(manual_best_sarima$arma[c(1,6,2)], collapse = ","),
-              "x", paste(manual_best_sarima$arma[c(3,7,4)], collapse = ","),
-              "[", manual_best_sarima$arma[5], "]"))
-  print(paste("AIC:", round(AIC(manual_best_sarima), 2)))
-}
+(auto_sarima_a <- auto.arima(ts_data)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
+BIC(auto_sarima_a) # automaticky model rozhodne optimalni neni - je prilis komplikovany
+coeftest(auto_sarima_a) # model ma spoustu nevyznamnych clenu
+(auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
+coeftest(auto_sarima_b) # pomoci Bayesovskeho kriteria vybran jednodussi model
 
 # Použijeme auto.arima výsledek jako finální
-final_sarima <- auto_sarima
+final_sarima <- auto_sarima_b
 
 # Diagnostika residuí
 checkresiduals(final_sarima)
-
-
+#############################################################################
+## Analýza závislostí na jiných řadách
 # Příprava dalších časových řad
 other_series <- c("new_deaths", "stringency_index", "hosp_patients", "reproduction_rate")
 
@@ -263,7 +270,6 @@ for(series in names(ccf_results)) {
     print(significant_lags[[series]])
   }
 }
-
 
 # Příprava zpožděných proměnných na základě CCF analýzy
 data$deaths_lag <- c(rep(NA, 1), data$new_deaths[1:(nrow(data)-1)])
@@ -306,7 +312,6 @@ models_comparison <- data.frame(
 )
 print(models_comparison)
 
-
 # Diagnostika residuí pro všechny modely
 models_to_check <- list(
   "Funkční" = best_func_model,
@@ -326,11 +331,9 @@ for(model_name in names(models_to_check)) {
   
   # ACF residuí
   acf(residuals, main = paste("ACF residuí -", model_name), lag.max = 50)
-  
   # Ljung-Box test
   lb_test <- Box.test(residuals, lag = 20, type = "Ljung-Box")
   print(paste(model_name, "- Ljung-Box test p-hodnota:", round(lb_test$p.value, 4)))
-  
   # Normalita residuí
   shapiro_test <- shapiro.test(sample(residuals, min(5000, length(residuals))))
   print(paste(model_name, "- Shapiro test p-hodnota:", round(shapiro_test$p.value, 4)))
@@ -344,11 +347,10 @@ for(model_name in names(models_to_check)) {
   qqnorm(residuals, main = paste("Q-Q plot -", model_name))
   qqline(residuals)
 }
-
-
+################################################################################
+##Predikce budoucích hodnot
 # Predikce na 10 období dopředu
 horizon <- 10
-
 # Funkční model predikce
 future_t <- (nrow(data)+1):(nrow(data)+horizon)
 future_data <- data.frame(
@@ -358,21 +360,46 @@ future_data <- data.frame(
   sin_7 = sin(2 * pi * future_t / 7),
   cos_7 = cos(2 * pi * future_t / 7)
 )
+# Jednoduchá predikce bez složitého rozlišování modelů
+pred_func <- tryCatch({
+  predict(best_func_model, newdata = future_data, interval = "prediction")
+}, error = function(e) {
+  cat("Chyba při predikci funkčního modelu:", e$message, "\n")
+  # Náhradní predikce - jen fit bez intervalů
+  fit_values <- predict(best_func_model, newdata = future_data)
+  # Vytvoříme jednoduché intervaly na základě residuální std. chyby
+  residual_se <- summary(best_func_model)$sigma
+  cbind(fit = fit_values, 
+        lwr = fit_values - 1.96 * residual_se, 
+        upr = fit_values + 1.96 * residual_se)
+})
 
-if(grepl("poly", deparse(best_func_model$call))) {
-  pred_func <- predict(best_func_model, newdata = future_data, interval = "prediction")
-} else {
-  pred_func <- predict(best_func_model, newdata = future_data, interval = "prediction")
-}
+cat("Funkční model - predikce dokončena\n")
 
 # SARIMA predikce
 pred_sarima <- forecast(final_sarima, h = horizon)
 
 # ARIMAX predikce (potřebujeme budoucí hodnoty externích proměnných)
-# Pro zjednodušení použijeme poslední hodnoty
-last_external <- external_complete[nrow(external_complete), ]
-future_external <- matrix(rep(last_external, horizon), nrow = horizon, byrow = TRUE)
-pred_arimax <- forecast(arimax_model, xreg = future_external, h = horizon)
+# Pro zjednodušení použijeme poslední dostupné hodnoty
+last_external <- external_complete[nrow(external_complete), , drop = FALSE]
+future_external <- matrix(rep(as.numeric(last_external), horizon), 
+                          nrow = horizon, byrow = TRUE)
+
+# Zajistíme správné názvy sloupců
+colnames(future_external) <- colnames(external_complete)
+
+cat("Názvy sloupců v trénovacích datech:", colnames(external_complete), "\n")
+cat("Názvy sloupců v predikčních datech:", colnames(future_external), "\n")
+
+pred_arimax <- tryCatch({
+  forecast(arimax_model, xreg = future_external, h = horizon)
+}, error = function(e) {
+  cat("Chyba při ARIMAX predikci:", e$message, "\n")
+  # Náhradní predikce bez externích regresorů
+  forecast(final_sarima, h = horizon)
+})
+
+cat("ARIMAX predikce dokončena\n")
 
 # Grafické zobrazení predikcí
 future_dates <- seq(max(data$date) + 1, by = "day", length.out = horizon)
@@ -417,8 +444,8 @@ predictions_summary <- data.frame(
 )
 print("Predikce na příštích 10 dní:")
 print(predictions_summary)
-
-
+#####################################################################################x
+##Závěrečné srovnání a doporučení
 # Finální srovnání všech modelů
 final_comparison <- data.frame(
   Model = c("Funkční (trend+sezónost)", "SARIMA", "ARIMAX"),
@@ -445,3 +472,4 @@ cat("\n=== DOPORUČENÍ ===\n")
 cat("Nejlepší model podle AIC:", best_model_name, "\n")
 cat("AIC:", round(final_comparison$AIC[best_model_idx], 2), "\n")
 cat("RMSE:", round(final_comparison$RMSE[best_model_idx], 2), "\n")
+
