@@ -7,13 +7,13 @@ library(stats)
 library(corrplot)
 library(gridExtra)
 library(TTR)
-library(seasonal)
-library(vars)
+
+PATH = "C:\\Data\\School\\PRI2\\CAS_covid_data\\covid_timeseries.csv"
 
 Sys.setlocale("LC_TIME", "C")
 
 #Načtení dat
-data <- read.csv("covid_timeseries.csv")
+data <- read.csv(paste(PATH))
 
 #Kontrola prázdných sloupců
 prazdne_sloupce <- sapply(data, function(x) all(is.na(x)))
@@ -465,6 +465,449 @@ print("Finální srovnání modelů:")
 print(final_comparison)
 
 # Doporučení nejlepšího modelu
+best_model_idx <- which.min(final_comparison$AIC)
+best_model_name <- final_comparison$Model[best_model_idx]
+
+cat("\n=== DOPORUČENÍ ===\n")
+cat("Nejlepší model podle AIC:", best_model_name, "\n")
+cat("AIC:", round(final_comparison$AIC[best_model_idx], 2), "\n")
+cat("RMSE:", round(final_comparison$RMSE[best_model_idx], 2), "\n")
+
+
+
+
+
+
+
+
+# Načtení potřebných knihoven (bez seasonal a vars)
+library(tidyverse)
+library(lubridate)
+library(forecast)
+library(tseries)
+library(stats)
+library(corrplot)
+library(gridExtra)
+library(TTR)
+
+Sys.setlocale("LC_TIME", "C")
+
+# Načtení dat (nebo simulace)
+# ... (same as in your original script up to creation of `data` and ts_data) ...
+# For brevity in this snippet, assume the data creation block is identical to yours
+# (dates, simulated new_cases, new_deaths, stringency_index, hosp_patients, total_cases, reproduction_rate)
+# and ts_data <- ts(data$new_cases, start = c(2020, 1), frequency = 365.25)
+#Načtení dat
+data <- read.csv("covid_timeseries.csv")
+
+#Kontrola prázdných sloupců
+prazdne_sloupce <- sapply(data, function(x) all(is.na(x)))
+prazdne_sloupce
+names(data)[prazdne_sloupce]
+
+set.seed(123)
+dates <- seq(as.Date("2020-01-01"), as.Date("2023-12-31"), by = "day")
+n <- length(dates)
+
+# Simulace COVID dat s trendem a sezónností
+trend <- seq(0, 500, length.out = n) + rnorm(n, 0, 10)
+seasonal <- 50 * sin(2 * pi * as.numeric(dates) / 365.25) + 30 * sin(2 * pi * as.numeric(dates) / 7)
+new_cases <- pmax(0, trend + seasonal + rnorm(n, 0, 20))
+
+# Další proměnné
+new_deaths <- new_cases * 0.02 + rnorm(n, 0, 2); new_deaths <- pmax(0, new_deaths)
+
+stringency_index <- 30 + 40 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 5)
+stringency_index <- pmin(100, pmax(0, stringency_index))
+
+hosp_patients <- new_cases * 0.15 + rnorm(n, 0, 5); hosp_patients <- pmax(0, hosp_patients)
+
+data <- data.frame(date = dates, location = "Czech Republic", new_cases = new_cases, new_deaths = new_deaths, stringency_index = stringency_index, hosp_patients = hosp_patients, total_cases = cumsum(new_cases), reproduction_rate = 1 + 0.3 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 0.1))
+
+# Převod na časovou řadu
+ts_data <- ts(data$new_cases, start = c(2020, 1), frequency = 365.25)
+head(data)
+######################################################################
+##Grafické zobrazení řady
+# Grafické zobrazení hlavní řady
+p1 <- ggplot(data, aes(x = date, y = new_cases)) +
+  geom_line(color = "steelblue", alpha = 0.7) +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  labs(title = "Vývoj nových případů COVID-19",
+       x = "Datum", y = "Počet nových případů",
+       subtitle = "Denní data s trendem (červená linie)") +
+  theme_minimal()
+
+# Boxplot podle měsíců pro identifikaci sezónnosti
+data$month <- factor(month(data$date), labels = month.abb)
+p2 <- ggplot(data, aes(x = month, y = new_cases)) +
+  geom_boxplot(fill = "lightblue", alpha = 0.7) +
+  labs(title = "Sezónní rozdělení nových případů",
+       x = "Měsíc", y = "Počet nových případů") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+grid.arrange(p1, p2, ncol = 1)
+
+##Dekompozice časové řady
+# STL dekompozice
+stl_decomp <- stl(ts_data, s.window = "periodic", t.window = 365)
+plot(stl_decomp, main = "STL dekompozice časové řady nových případů")
+# Klouzavé průměry různých řádů
+ma_7 <- SMA(data$new_cases, n = 7)   
+ma_30 <- SMA(data$new_cases, n = 30) 
+ma_365 <- SMA(data$new_cases, n = 365) 
+
+# Exponenciální vyrovnání - jednodušší přístup
+exp_smooth_model <- HoltWinters(ts_data, gamma = FALSE)
+
+# Vytvoříme jednoduché exponenciální vyhlazení pomocí ETS
+ets_model <- ets(ts_data, model = "AAN", damped = FALSE)
+exp_smooth_fitted <- fitted(ets_model)
+
+# Zajistíme stejnou délku (ETS vrací stejnou délku jako originální data)
+n_obs <- length(data$new_cases)
+
+# Pokud je exp_smooth_fitted kratší, doplníme NA na začátek
+if(length(exp_smooth_fitted) < n_obs) {
+  exp_smooth_full <- c(rep(NA, n_obs - length(exp_smooth_fitted)), 
+                       as.numeric(exp_smooth_fitted))
+} else {
+  exp_smooth_full <- as.numeric(exp_smooth_fitted[1:n_obs])
+}
+
+# Grafické srovnání - pouze metody, které máme
+trend_data <- data.frame(
+  date = data$date,
+  original = data$new_cases,
+  ma_7 = ma_7,
+  ma_30 = ma_30
+)
+
+# Přidáme ma_365 pouze pokud má dostatek dat
+if(sum(!is.na(ma_365)) > 100) {
+  trend_data$ma_365 <- ma_365
+}
+
+# Přidáme exponenciální vyhlazení
+trend_data$exp_smooth <- exp_smooth_full
+
+trend_plot <- trend_data %>%
+  pivot_longer(cols = -date, names_to = "method", values_to = "value") %>%
+  filter(!is.na(value)) %>%  # Odfiltrujeme NA hodnoty
+  ggplot(aes(x = date, y = value, color = method)) +
+  geom_line(alpha = 0.7, size = 0.8) +
+  scale_color_manual(values = c("original" = "gray50", "ma_7" = "blue", 
+                                "ma_30" = "green", "ma_365" = "red",
+                                "exp_smooth" = "purple"),
+                     name = "Metoda",
+                     labels = c("original" = "Originální data", 
+                                "ma_7" = "MA(7)", "ma_30" = "MA(30)", 
+                                "ma_365" = "MA(365)", "exp_smooth" = "Exp. vyhlazení")) +
+  labs(title = "Srovnání metod vyhlazení trendu",
+       x = "Datum", y = "Hodnota") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+print(trend_plot)
+
+# Analýza trendové složky
+trend_component <- stl_decomp$time.series[,"trend"]
+cat("Souhrn trendové složky:\n")
+print(summary(trend_component))
+
+# Analýza sezónní složky
+seasonal_component <- stl_decomp$time.series[,"seasonal"]
+cat("\nSouhrn sezónní složky:\n")
+print(summary(seasonal_component))
+##############################################################################
+##Hledání optimálního funkčního modelu
+# Příprava dat pro regresní model
+data$t <- 1:nrow(data)
+data$sin_365 <- sin(2 * pi * data$t / 365.25)
+data$cos_365 <- cos(2 * pi * data$t / 365.25)
+data$sin_7 <- sin(2 * pi * data$t / 7)
+data$cos_7 <- cos(2 * pi * data$t / 7)
+
+# Model 1: Lineární trend + roční sezónnost
+model1 <- lm(new_cases ~ t + sin_365 + cos_365, data = data)
+# Model 2: Polynomiální trend + roční sezónnost
+model2 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365, data = data)
+# Model 3: Lineární trend + roční + týdenní sezónnost
+model3 <- lm(new_cases ~ t + sin_365 + cos_365 + sin_7 + cos_7, data = data)
+# Model 4: Polynomiální trend + roční + týdenní sezónnost
+model4 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365 + sin_7 + cos_7, data = data)
+# Srovnání modelů
+models <- list(model1, model2, model3, model4)
+model_names <- c("Lin+Roční", "Poly+Roční", "Lin+Roční+Týdenní", "Poly+Roční+Týdenní")
+
+# AIC a BIC srovnání
+comparison <- data.frame(
+  Model = model_names,
+  AIC = sapply(models, AIC),
+  BIC = sapply(models, BIC),
+  R_squared = sapply(models, function(x) summary(x)$r.squared)
+)
+print(comparison)
+
+# Nejlepší model podle AIC
+best_func_model <- models[[which.min(comparison$AIC)]]
+print(summary(best_func_model))
+
+# Grafické zobrazení fitování
+data$fitted_func <- fitted(best_func_model)
+ggplot(data, aes(x = date)) +
+  geom_line(aes(y = new_cases), color = "black", alpha = 0.6, size = 0.5) +
+  geom_line(aes(y = fitted_func), color = "red", size = 1) +
+  labs(title = "Nejlepší funkční model",
+       x = "Datum", y = "Počet případů",
+       subtitle = paste("Model:", model_names[which.min(comparison$AIC)])) +
+  theme_minimal()
+###############################################################################
+##Hledání optimálního SARIMA modelu
+# Kontrola stacionarity
+adf_test <- adf.test(ts_data)
+print(paste("ADF test p-hodnota:", round(adf_test$p.value, 4)))
+# KPSS test stacionarity
+kpss_test <- kpss.test(ts_data)
+print(paste("KPSS test p-hodnota:", round(kpss_test$p.value, 4)))
+
+# ACF a PACF grafy
+par(mfrow = c(2,1))
+acf(ts_data, main = "ACF původní řady", lag.max = 100)
+pacf(ts_data, main = "PACF původní řady", lag.max = 100)
+
+# Diferenciace pokud je potřeba
+if(adf_test$p.value > 0.05) {
+  ts_diff <- diff(ts_data)
+  adf_diff <- adf.test(ts_diff)
+  print(paste("ADF test diferencované řady:", round(adf_diff$p.value, 4)))
+  
+  par(mfrow = c(2,1))
+  acf(ts_diff, main = "ACF diferencované řady", lag.max = 100)
+  pacf(ts_diff, main = "PACF diferencované řady", lag.max = 100)
+} else {
+  ts_diff <- ts_data
+}
+
+cat("Testování vybraných SARIMA kombinací...\n")
+
+# Vybrané rozumné kombinace na základě ACF/PACF a zkušeností
+(fit1 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(0,1,0))))
+(fit2 <- Arima(ts_data, order = c(0,0,1), seasonal = list(order = c(0,1,0))))
+(fit3 <- Arima(ts_data, order = c(1,0,1), seasonal = list(order = c(0,1,0))))
+(fit4 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,0))))
+(fit5 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(0,1,1))))
+(fit6 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,1))))
+(fit7 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(1,1,1))))
+BIC(fit1); BIC(fit2); BIC(fit3); BIC(fit4); BIC(fit5); BIC(fit6); BIC(fit7)
+
+(auto_sarima_a <- auto.arima(ts_data)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
+BIC(auto_sarima_a) # automaticky model rozhodne optimalni neni - je prilis komplikovany
+coeftest(auto_sarima_a) # model ma spoustu nevyznamnych clenu
+(auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
+coeftest(auto_sarima_b) # pomoci Bayesovskeho kriteria vybran jednodussi model
+
+# Použijeme auto.arima výsledek jako finální
+final_sarima <- auto_sarima_b
+
+# Diagnostika residuí
+checkresiduals(final_sarima)
+#############################################################################
+## Analýza závislostí na jiných řadách
+# Příprava dalších časových řad
+
+other_series <- c("new_deaths", "stringency_index", "hosp_patients", "reproduction_rate")
+ccf_results <- list()
+max_lag <- 30
+
+par(mfrow = c(2,2))
+for(i in 1:length(other_series)) {
+  y_var <- data[[other_series[i]]]
+  y_var <- y_var[!is.na(y_var)]
+  x_var <- data$new_cases[1:length(y_var)]
+  
+  ccf_result <- ccf(x_var, y_var, lag.max = max_lag, 
+                    main = paste("CCF:", other_series[i]))
+  ccf_results[[other_series[i]]] <- ccf_result
+}
+# (rest of CCF significance detection as before)
+# -------------------------------------------------------------------------
+# Create lagged external predictors (same idea as your original)
+data$deaths_lag <- c(rep(NA, 1), data$new_deaths[1:(nrow(data)-1)])
+data$stringency_lag <- c(rep(NA, 5), data$stringency_index[1:(nrow(data)-5)])
+data$hosp_lag <- c(rep(NA, 2), data$hosp_patients[1:(nrow(data)-2)])
+
+external_vars <- cbind(
+  deaths_lag = data$deaths_lag,
+  stringency_lag = data$stringency_lag,
+  hosp_lag = data$hosp_lag
+)
+
+complete_idx <- complete.cases(cbind(data$new_cases, external_vars))
+ts_complete <- ts(data$new_cases[complete_idx], start = c(2020, 1), frequency = 365.25)
+external_complete <- external_vars[complete_idx, ]
+
+# ARIMAX model (same as before)
+arimax_model <- auto.arima(ts_complete, xreg = external_complete)
+print(summary(arimax_model))
+
+# -------------------------------------------------------------------------
+# VAR replacement: simple VAR-like system using equation-by-equation OLS
+# We build lagged regressors for each variable and fit one lm() per series.
+# We select lag p by minimizing the SUM of AICs across equations (proxy for system AIC).
+# -------------------------------------------------------------------------
+
+# Helper: build lagged dataframe for given variables and lag p
+build_lags <- function(df, vars, p) {
+  n <- nrow(df)
+  lagged <- data.frame(row = 1:n)  # temporary index
+  for(v in vars) {
+    for(l in 1:p) {
+      colname <- paste0(v, "_lag", l)
+      lagged[[colname]] <- c(rep(NA, l), df[[v]][1:(n - l)])
+    }
+  }
+  lagged$row <- NULL
+  return(lagged)
+}
+
+# Fit equation system for a chosen p and return list with fits and summed AIC/BIC
+fit_var_equations <- function(df, vars, p) {
+  lagged <- build_lags(df, vars, p)
+  # align targets: drop first p rows
+  targets <- df[(p+1):nrow(df), vars, drop = FALSE]
+  predictors <- lagged[(p+1):nrow(df), , drop = FALSE]
+  fits <- list()
+  aic_sum <- 0
+  bic_sum <- 0
+  rss_list <- c()
+  for(v in vars) {
+    dat_eq <- cbind(target = targets[[v]], predictors)
+    # small safeguard: remove columns with zero variance
+    keep_cols <- sapply(dat_eq, function(x) var(x, na.rm = TRUE) > 0)
+    dat_eq <- dat_eq[, keep_cols, drop = FALSE]
+    fit <- lm(target ~ ., data = as.data.frame(dat_eq))
+    fits[[v]] <- fit
+    aic_sum <- aic_sum + AIC(fit)
+    bic_sum <- bic_sum + BIC(fit)
+    rss_list[v] <- mean(residuals(fit)^2)
+  }
+  return(list(p = p, fits = fits, aic_sum = aic_sum, bic_sum = bic_sum, rss = rss_list))
+}
+
+# Autoscan p = 1..max_p and pick best by summed AIC
+vars_for_var <- c("new_cases", "new_deaths", "stringency_index", "hosp_patients")
+max_p_try <- 6  # reasonable max lag (you can increase if you want)
+results_by_p <- list()
+for(p_try in 1:max_p_try) {
+  res_p <- fit_var_equations(data[complete_idx, ], vars_for_var, p_try)
+  results_by_p[[as.character(p_try)]] <- res_p
+  cat("p =", p_try, " summed AIC =", round(res_p$aic_sum,2), " summed BIC =", round(res_p$bic_sum,2), "\n")
+}
+
+# Choose best p by smallest summed AIC
+aic_sums <- sapply(results_by_p, function(x) x$aic_sum)
+best_p <- as.integer(names(which.min(aic_sums)))
+cat("Chosen VAR-like lag p =", best_p, "\n")
+var_like <- results_by_p[[as.character(best_p)]]
+
+# Summarize fitted equations
+for(v in names(var_like$fits)) {
+  cat("\n--- Equation for", v, "---\n")
+  print(summary(var_like$fits[[v]]))
+}
+
+# Build a simple forecast for new_cases from this var-like system:
+# We'll forecast h steps by iterating using last observed values and predicted lags.
+forecast_var_like_new_cases <- function(df, fits_list, vars, p, h = 10) {
+  # df: full data frame for vars with no missing at the end
+  library(zoo) # for convenience (usually available)
+  last_block <- tail(df[, vars], p)  # p last observations
+  preds <- numeric(h)
+  # we'll keep a rolling window of the past p observations
+  window <- as.matrix(last_block)
+  for(i in 1:h) {
+    # build predictor vector in same column order as used in fit (var_lag1 ... var_lagp for each var)
+    newpred <- c()
+    for(v in vars) {
+      for(l in 1:p) {
+        # lag l => value at position (n - (l-1)) in rolling window (most recent is last row)
+        newpred <- c(newpred, window[nrow(window) - (l-1), v])
+      }
+    }
+    newdf <- as.data.frame(t(newpred))
+    # name columns to match training predictor names
+    names(newdf) <- names(coef(fits_list[[1]]))[-1]  # strip intercept; assumes same predictor set - caution
+    # Predict for new_cases equation specifically
+    # to be safe we will use predict with NA handling by binding to full predictor names (if mismatch, fallback to 0)
+    fit_nc <- fits_list[["new_cases"]]
+    # create full predictor frame matching fit_nc
+    model_terms <- attr(terms(fit_nc), "term.labels")
+    pred_frame <- data.frame(matrix(nrow = 1, ncol = length(model_terms)))
+    names(pred_frame) <- model_terms
+    for(mt in model_terms) {
+      if(mt %in% names(newdf)) pred_frame[[mt]] <- newdf[[mt]] else pred_frame[[mt]] <- 0
+    }
+    pred_val <- as.numeric(predict(fit_nc, newdata = pred_frame))
+    # append
+    preds[i] <- pred_val
+    # update window: append new row (for all vars we only have new_cases prediction; others we set to last known value)
+    new_row <- tail(window, 1)
+    new_row["new_cases"] <- pred_val
+    window <- rbind(window[-1, , drop = FALSE], new_row)
+  }
+  return(preds)
+}
+
+# Forecast 10 steps with var-like system (for new_cases)
+h_var <- 10
+var_like_preds <- forecast_var_like_new_cases(data, var_like$fits, vars_for_var, best_p, h = h_var)
+
+# For later comparisons, build a "system" AIC/BIC and RMSE metrics
+var_like_aic <- var_like$aic_sum
+var_like_bic <- var_like$bic_sum
+var_like_rmse <- sqrt(mean(unlist(var_like$rss)))
+
+cat("VAR-like system: summed AIC =", var_like_aic, " summed BIC =", var_like_bic, " mean RMSE =", var_like_rmse, "\n")
+
+# -------------------------------------------------------------------------
+# Srovnání modelů (replace VAR with VAR-like)
+models_comparison <- data.frame(
+  Model = c("Funkční", "SARIMA", "ARIMAX", "VAR-like"),
+  AIC = c(AIC(best_func_model), AIC(final_sarima), AIC(arimax_model), var_like_aic),
+  BIC = c(BIC(best_func_model), BIC(final_sarima), BIC(arimax_model), var_like_bic)
+)
+print(models_comparison)
+
+# (Residual diagnostics and forecasting code remain as before)
+# Use var_like_preds where you previously used VAR predictions if desired (we used for new_cases only)
+# -------------------------------------------------------------------------
+
+# Predikce budoucích hodnot (use existing pred_func, pred_sarima, pred_arimax)
+# Add var-like predictions into your plotting if you want:
+# Example: include var_like_preds in the final plot by constructing a column arimax_pred etc.
+# (You can adapt the plotting block to include var_like_preds as another colored line.)
+
+# Final comparison and recommendation (same idea), but include VAR-like metrics if needed
+final_comparison <- data.frame(
+  Model = c("Funkční (trend+sezónost)", "SARIMA", "ARIMAX", "VAR-like"),
+  AIC = c(AIC(best_func_model), AIC(final_sarima), AIC(arimax_model), var_like_aic),
+  BIC = c(BIC(best_func_model), BIC(final_sarima), BIC(arimax_model), var_like_bic),
+  Parametrů = c(length(coef(best_func_model)),
+                length(coef(final_sarima)),
+                length(coef(arimax_model)),
+                NA), # VAR-like param count is model-by-model; you can compute sum(length(coef())) if desired
+  RMSE = c(
+    sqrt(mean(residuals(best_func_model)^2)),
+    sqrt(mean(residuals(final_sarima)^2)),
+    sqrt(mean(residuals(arimax_model)^2)),
+    var_like_rmse
+  )
+)
+print("Finální srovnání modelů (včetně VAR-like):")
+print(final_comparison)
+
 best_model_idx <- which.min(final_comparison$AIC)
 best_model_name <- final_comparison$Model[best_model_idx]
 
