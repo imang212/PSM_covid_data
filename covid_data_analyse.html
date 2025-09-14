@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Patrik Poklop, Tomáš Ladislav Kotek">
+
+<title>Analýza covid dat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="covid_data_analyse_files/libs/clipboard/clipboard.min.js"></script>
+<script src="covid_data_analyse_files/libs/quarto-html/quarto.js"></script>
+<script src="covid_data_analyse_files/libs/quarto-html/popper.min.js"></script>
+<script src="covid_data_analyse_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="covid_data_analyse_files/libs/quarto-html/anchor.min.js"></script>
+<link href="covid_data_analyse_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="covid_data_analyse_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="covid_data_analyse_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="covid_data_analyse_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="covid_data_analyse_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Analýza covid dat</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Patrik Poklop, Tomáš Ladislav Kotek </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="analýza-covid-dat-na-časové-řady" class="level1">
+<h1>Analýza covid dat na časové řady</h1>
+<section id="kontrola-prázdných-sloupců" class="level4">
+<h4 class="anchored" data-anchor-id="kontrola-prázdných-sloupců">Kontrola prázdných sloupců</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Kontrola prázdných sloupců</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>prazdne_sloupce <span class="ot">&lt;-</span> <span class="fu">sapply</span>(data, <span class="cf">function</span>(x) <span class="fu">all</span>(<span class="fu">is.na</span>(x)))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>prazdne_sloupce</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                  location 
+                                     FALSE 
+                                      date 
+                                     FALSE 
+                               total_cases 
+                                     FALSE 
+                                 new_cases 
+                                     FALSE 
+                        new_cases_smoothed 
+                                     FALSE 
+                              total_deaths 
+                                     FALSE 
+                                new_deaths 
+                                     FALSE 
+                       new_deaths_smoothed 
+                                     FALSE 
+                   total_cases_per_million 
+                                     FALSE 
+                     new_cases_per_million 
+                                     FALSE 
+            new_cases_smoothed_per_million 
+                                     FALSE 
+                  total_deaths_per_million 
+                                     FALSE 
+                    new_deaths_per_million 
+                                     FALSE 
+           new_deaths_smoothed_per_million 
+                                     FALSE 
+                         reproduction_rate 
+                                     FALSE 
+                              icu_patients 
+                                     FALSE 
+                  icu_patients_per_million 
+                                     FALSE 
+                             hosp_patients 
+                                     FALSE 
+                 hosp_patients_per_million 
+                                     FALSE 
+                     weekly_icu_admissions 
+                                     FALSE 
+         weekly_icu_admissions_per_million 
+                                     FALSE 
+                    weekly_hosp_admissions 
+                                     FALSE 
+        weekly_hosp_admissions_per_million 
+                                     FALSE 
+                               total_tests 
+                                     FALSE 
+                                 new_tests 
+                                     FALSE 
+                  total_tests_per_thousand 
+                                     FALSE 
+                    new_tests_per_thousand 
+                                     FALSE 
+                        new_tests_smoothed 
+                                     FALSE 
+           new_tests_smoothed_per_thousand 
+                                     FALSE 
+                             positive_rate 
+                                     FALSE 
+                            tests_per_case 
+                                     FALSE 
+                               tests_units 
+                                     FALSE 
+                        total_vaccinations 
+                                     FALSE 
+                         people_vaccinated 
+                                     FALSE 
+                   people_fully_vaccinated 
+                                     FALSE 
+                            total_boosters 
+                                     FALSE 
+                          new_vaccinations 
+                                     FALSE 
+                 new_vaccinations_smoothed 
+                                     FALSE 
+            total_vaccinations_per_hundred 
+                                     FALSE 
+             people_vaccinated_per_hundred 
+                                     FALSE 
+       people_fully_vaccinated_per_hundred 
+                                     FALSE 
+                total_boosters_per_hundred 
+                                     FALSE 
+     new_vaccinations_smoothed_per_million 
+                                     FALSE 
+            new_people_vaccinated_smoothed 
+                                     FALSE 
+new_people_vaccinated_smoothed_per_hundred 
+                                     FALSE 
+                          stringency_index 
+                                     FALSE 
+      excess_mortality_cumulative_absolute 
+                                     FALSE 
+               excess_mortality_cumulative 
+                                     FALSE 
+                          excess_mortality 
+                                     FALSE 
+   excess_mortality_cumulative_per_million 
+                                     FALSE </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(data)[prazdne_sloupce]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>character(0)</code></pre>
+</div>
+</div>
+</section>
+<section id="vytvoření-simulace-covid-dat-s-trendem-sezónnosti" class="level4">
+<h4 class="anchored" data-anchor-id="vytvoření-simulace-covid-dat-s-trendem-sezónnosti">Vytvoření simulace covid dat s trendem sezónnosti</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>dates <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">as.Date</span>(<span class="st">"2020-01-01"</span>), <span class="fu">as.Date</span>(<span class="st">"2023-12-31"</span>), <span class="at">by =</span> <span class="st">"day"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">length</span>(dates)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulace COVID dat s trendem a sezónností</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>trend <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">500</span>, <span class="at">length.out =</span> n) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">10</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>seasonal <span class="ot">&lt;-</span> <span class="dv">50</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">as.numeric</span>(dates) <span class="sc">/</span> <span class="fl">365.25</span>) <span class="sc">+</span> <span class="dv">30</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">as.numeric</span>(dates) <span class="sc">/</span> <span class="dv">7</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>new_cases <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, trend <span class="sc">+</span> seasonal <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">20</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Další proměnné</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>new_deaths <span class="ot">&lt;-</span> new_cases <span class="sc">*</span> <span class="fl">0.02</span> <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">2</span>); new_deaths <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, new_deaths)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>stringency_index <span class="ot">&lt;-</span> <span class="dv">30</span> <span class="sc">+</span> <span class="dv">40</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">as.numeric</span>(dates) <span class="sc">/</span> <span class="fl">365.25</span>) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">5</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>stringency_index <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="dv">100</span>, <span class="fu">pmax</span>(<span class="dv">0</span>, stringency_index))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>hosp_patients <span class="ot">&lt;-</span> new_cases <span class="sc">*</span> <span class="fl">0.15</span> <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">5</span>); hosp_patients <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, hosp_patients)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">date =</span> dates, <span class="at">location =</span> <span class="st">"Czech Republic"</span>, <span class="at">new_cases =</span> new_cases, <span class="at">new_deaths =</span> new_deaths, <span class="at">stringency_index =</span> stringency_index, <span class="at">hosp_patients =</span> hosp_patients, <span class="at">total_cases =</span> <span class="fu">cumsum</span>(new_cases), <span class="at">reproduction_rate =</span> <span class="dv">1</span> <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> <span class="fu">as.numeric</span>(dates) <span class="sc">/</span> <span class="fl">365.25</span>) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="fl">0.1</span>))</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Převod na časovou řadu</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>ts_data <span class="ot">&lt;-</span> <span class="fu">ts</span>(data<span class="sc">$</span>new_cases, <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">2020</span>, <span class="dv">1</span>), <span class="at">frequency =</span> <span class="fl">365.25</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        date       location new_cases new_deaths stringency_index hosp_patients
+1 2020-01-01 Czech Republic  0.000000  0.0000000         38.17257      0.000000
+2 2020-01-02 Czech Republic  8.476064  1.6307492         32.33209      0.000000
+3 2020-01-03 Czech Republic 53.702003  2.8014897         32.57451     11.548402
+4 2020-01-04 Czech Republic 41.602860  0.0000000         29.03494      4.649799
+5 2020-01-05 Czech Republic 14.651097  0.0000000         29.02351      0.000000
+6 2020-01-06 Czech Republic  8.175829  0.8536674         29.50383      3.803271
+  total_cases reproduction_rate
+1    0.000000         0.8642260
+2    8.476064         1.0286704
+3   62.178066         1.2268077
+4  103.780926         0.9905428
+5  118.432023         0.9622288
+6  126.607853         1.1606860</code></pre>
+</div>
+</div>
+</section>
+<section id="grafické-zobrazení-řady" class="level4">
+<h4 class="anchored" data-anchor-id="grafické-zobrazení-řady">Grafické zobrazení řady</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Grafické zobrazení hlavní řady</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> new_cases)) <span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"loess"</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Vývoj nových případů COVID-19"</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Datum"</span>, <span class="at">y =</span> <span class="st">"Počet nových případů"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Denní data s trendem (červená linie)"</span>) <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Boxplot podle měsíců pro identifikaci sezónnosti</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>month <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">month</span>(data<span class="sc">$</span>date), <span class="at">labels =</span> month.abb)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> new_cases)) <span class="sc">+</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">"lightblue"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Sezónní rozdělení nových případů"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Měsíc"</span>, <span class="at">y =</span> <span class="st">"Počet nových případů"</span>) <span class="sc">+</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>))</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(p1, p2, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="dekompozice-časové-řady" class="level4">
+<h4 class="anchored" data-anchor-id="dekompozice-časové-řady">Dekompozice časové řady</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># STL dekompozice</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>stl_decomp <span class="ot">&lt;-</span> <span class="fu">stl</span>(ts_data, <span class="at">s.window =</span> <span class="st">"periodic"</span>, <span class="at">t.window =</span> <span class="dv">365</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(stl_decomp, <span class="at">main =</span> <span class="st">"STL dekompozice časové řady nových případů"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="identifikace-trendu-pomocí-vyhlazení" class="level4">
+<h4 class="anchored" data-anchor-id="identifikace-trendu-pomocí-vyhlazení">Identifikace trendu pomocí vyhlazení</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Klouzavé průměry různých řádů</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>ma_7 <span class="ot">&lt;-</span> <span class="fu">SMA</span>(data<span class="sc">$</span>new_cases, <span class="at">n =</span> <span class="dv">7</span>)   </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ma_30 <span class="ot">&lt;-</span> <span class="fu">SMA</span>(data<span class="sc">$</span>new_cases, <span class="at">n =</span> <span class="dv">30</span>) </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>ma_365 <span class="ot">&lt;-</span> <span class="fu">SMA</span>(data<span class="sc">$</span>new_cases, <span class="at">n =</span> <span class="dv">365</span>) </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Exponenciální vyrovnání - jednodušší přístup</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>exp_smooth_model <span class="ot">&lt;-</span> <span class="fu">HoltWinters</span>(ts_data, <span class="at">gamma =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Vytvoříme jednoduché exponenciální vyhlazení pomocí ETS</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>ets_model <span class="ot">&lt;-</span> <span class="fu">ets</span>(ts_data, <span class="at">model =</span> <span class="st">"AAN"</span>, <span class="at">damped =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>exp_smooth_fitted <span class="ot">&lt;-</span> <span class="fu">fitted</span>(ets_model)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Zajistíme stejnou délku (ETS vrací stejnou délku jako originální data)</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>n_obs <span class="ot">&lt;-</span> <span class="fu">length</span>(data<span class="sc">$</span>new_cases)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Pokud je exp_smooth_fitted kratší, doplníme NA na začátek</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(exp_smooth_fitted) <span class="sc">&lt;</span> n_obs) {</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  exp_smooth_full <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, n_obs <span class="sc">-</span> <span class="fu">length</span>(exp_smooth_fitted)), </span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">as.numeric</span>(exp_smooth_fitted))</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  exp_smooth_full <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(exp_smooth_fitted[<span class="dv">1</span><span class="sc">:</span>n_obs])</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Grafické srovnání - pouze metody, které máme</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>trend_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">date =</span> data<span class="sc">$</span>date,</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">original =</span> data<span class="sc">$</span>new_cases,</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ma_7 =</span> ma_7,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">ma_30 =</span> ma_30</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Přidáme ma_365 pouze pokud má dostatek dat</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(ma_365)) <span class="sc">&gt;</span> <span class="dv">100</span>) { trend_data<span class="sc">$</span>ma_365 <span class="ot">&lt;-</span> ma_365 }</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Přidáme exponenciální vyhlazení</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>trend_data<span class="sc">$</span>exp_smooth <span class="ot">&lt;-</span> exp_smooth_full</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>trend_plot <span class="ot">&lt;-</span> trend_data <span class="sc">%&gt;%</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>date, <span class="at">names_to =</span> <span class="st">"method"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)) <span class="sc">%&gt;%</span>  <span class="co"># Odfiltrujeme NA hodnoty</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> value, <span class="at">color =</span> method)) <span class="sc">+</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.7</span>, <span class="at">size =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"original"</span> <span class="ot">=</span> <span class="st">"gray50"</span>, <span class="st">"ma_7"</span> <span class="ot">=</span> <span class="st">"blue"</span>, </span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"ma_30"</span> <span class="ot">=</span> <span class="st">"green"</span>, <span class="st">"ma_365"</span> <span class="ot">=</span> <span class="st">"red"</span>,</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"exp_smooth"</span> <span class="ot">=</span> <span class="st">"purple"</span>),</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>                     <span class="at">name =</span> <span class="st">"Metoda"</span>,</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>                     <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"original"</span> <span class="ot">=</span> <span class="st">"Originální data"</span>, </span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"ma_7"</span> <span class="ot">=</span> <span class="st">"MA(7)"</span>, <span class="st">"ma_30"</span> <span class="ot">=</span> <span class="st">"MA(30)"</span>, </span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"ma_365"</span> <span class="ot">=</span> <span class="st">"MA(365)"</span>, <span class="st">"exp_smooth"</span> <span class="ot">=</span> <span class="st">"Exp. vyhlazení"</span>)) <span class="sc">+</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Srovnání metod vyhlazení trendu"</span>,</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Datum"</span>, <span class="at">y =</span> <span class="st">"Hodnota"</span>) <span class="sc">+</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(trend_plot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Analýza trendové složky</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>trend_component <span class="ot">&lt;-</span> stl_decomp<span class="sc">$</span>time.series[,<span class="st">"trend"</span>]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Souhrn trendové složky:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Souhrn trendové složky:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(trend_component))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  30.69  126.45  247.30  250.43  375.83  475.03 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Analýza sezónní složky</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>seasonal_component <span class="ot">&lt;-</span> stl_decomp<span class="sc">$</span>time.series[,<span class="st">"seasonal"</span>]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Souhrn sezónní složky:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Souhrn sezónní složky:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(seasonal_component))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+-31.171  -1.506  13.615  13.443  28.957  60.825 </code></pre>
+</div>
+</div>
+</section>
+<section id="hledání-optimálního-funkčního-modelu" class="level4">
+<h4 class="anchored" data-anchor-id="hledání-optimálního-funkčního-modelu">Hledání optimálního funkčního modelu</h4>
+<p>Srovnání</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Příprava dat pro regresní model</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>t <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>sin_365 <span class="ot">&lt;-</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> data<span class="sc">$</span>t <span class="sc">/</span> <span class="fl">365.25</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>cos_365 <span class="ot">&lt;-</span> <span class="fu">cos</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> data<span class="sc">$</span>t <span class="sc">/</span> <span class="fl">365.25</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>sin_7 <span class="ot">&lt;-</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> data<span class="sc">$</span>t <span class="sc">/</span> <span class="dv">7</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>cos_7 <span class="ot">&lt;-</span> <span class="fu">cos</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> data<span class="sc">$</span>t <span class="sc">/</span> <span class="dv">7</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Model 1: Lineární trend + roční sezónnost</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(new_cases <span class="sc">~</span> t <span class="sc">+</span> sin_365 <span class="sc">+</span> cos_365, <span class="at">data =</span> data)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Model 2: Polynomiální trend + roční sezónnost</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>model2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(new_cases <span class="sc">~</span> <span class="fu">poly</span>(t, <span class="dv">2</span>) <span class="sc">+</span> sin_365 <span class="sc">+</span> cos_365, <span class="at">data =</span> data)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Model 3: Lineární trend + roční + týdenní sezónnost</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>model3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(new_cases <span class="sc">~</span> t <span class="sc">+</span> sin_365 <span class="sc">+</span> cos_365 <span class="sc">+</span> sin_7 <span class="sc">+</span> cos_7, <span class="at">data =</span> data)</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Model 4: Polynomiální trend + roční + týdenní sezónnost</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>model4 <span class="ot">&lt;-</span> <span class="fu">lm</span>(new_cases <span class="sc">~</span> <span class="fu">poly</span>(t, <span class="dv">2</span>) <span class="sc">+</span> sin_365 <span class="sc">+</span> cos_365 <span class="sc">+</span> sin_7 <span class="sc">+</span> cos_7, <span class="at">data =</span> data)</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Srovnání modelů</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">list</span>(model1, model2, model3, model4)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>model_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Lin+Roční"</span>, <span class="st">"Poly+Roční"</span>, <span class="st">"Lin+Roční+Týdenní"</span>, <span class="st">"Poly+Roční+Týdenní"</span>)</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC a BIC srovnání</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> model_names,</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">AIC =</span> <span class="fu">sapply</span>(models, AIC),</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">BIC =</span> <span class="fu">sapply</span>(models, BIC),</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">R_squared =</span> <span class="fu">sapply</span>(models, <span class="cf">function</span>(x) <span class="fu">summary</span>(x)<span class="sc">$</span>r.squared)</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(comparison)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               Model      AIC      BIC R_squared
+1          Lin+Roční 14140.06 14166.50 0.9554851
+2         Poly+Roční 14140.71 14172.43 0.9555265
+3  Lin+Roční+Týdenní 13224.39 13261.40 0.9762794
+4 Poly+Roční+Týdenní 13224.16 13266.46 0.9763156</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Nejlepší model podle AIC</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>best_func_model <span class="ot">&lt;-</span> models[[<span class="fu">which.min</span>(comparison<span class="sc">$</span>AIC)]]</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(best_func_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = new_cases ~ poly(t, 2) + sin_365 + cos_365 + sin_7 + 
+    cos_7, data = data)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-69.683 -14.611   0.225  14.663  74.090 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  250.3634     0.5829 429.508   &lt;2e-16 ***
+poly(t, 2)1 5492.7287    22.7163 241.797   &lt;2e-16 ***
+poly(t, 2)2   33.2656    22.3209   1.490    0.136    
+sin_365       50.1841     0.8405  59.709   &lt;2e-16 ***
+cos_365       -0.6282     0.8258  -0.761    0.447    
+sin_7         -6.9679     0.8241  -8.455   &lt;2e-16 ***
+cos_7        -28.6165     0.8246 -34.704   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 22.28 on 1454 degrees of freedom
+Multiple R-squared:  0.9763,    Adjusted R-squared:  0.9762 
+F-statistic:  9989 on 6 and 1454 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>Grafické zobrazení fitování</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Grafické zobrazení fitování</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>fitted_func <span class="ot">&lt;-</span> <span class="fu">fitted</span>(best_func_model)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x =</span> date)) <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> new_cases), <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> fitted_func), <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Nejlepší funkční model"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Datum"</span>, <span class="at">y =</span> <span class="st">"Počet případů"</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="fu">paste</span>(<span class="st">"Model:"</span>, model_names[<span class="fu">which.min</span>(comparison<span class="sc">$</span>AIC)])) <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="hledání-optimálního-sarima-modelu" class="level4">
+<h4 class="anchored" data-anchor-id="hledání-optimálního-sarima-modelu">Hledání optimálního SARIMA modelu</h4>
+<p>Kontrola stacionarity</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Kontrola stacionarity</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>adf_test <span class="ot">&lt;-</span> <span class="fu">adf.test</span>(ts_data)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"ADF test p-hodnota:"</span>, <span class="fu">round</span>(adf_test<span class="sc">$</span>p.value, <span class="dv">4</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "ADF test p-hodnota: 0.3886"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># KPSS test stacionarity</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>kpss_test <span class="ot">&lt;-</span> <span class="fu">kpss.test</span>(ts_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in kpss.test(ts_data): p-value smaller than printed p-value</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"KPSS test p-hodnota:"</span>, <span class="fu">round</span>(kpss_test<span class="sc">$</span>p.value, <span class="dv">4</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "KPSS test p-hodnota: 0.01"</code></pre>
+</div>
+</div>
+<p>PACF a ACF grafy</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ACF a PACF grafy</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(ts_data, <span class="at">main =</span> <span class="st">"ACF původní řady"</span>, <span class="at">lag.max =</span> <span class="dv">100</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">pacf</span>(ts_data, <span class="at">main =</span> <span class="st">"PACF původní řady"</span>, <span class="at">lag.max =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Diferenciace pokud je potřeba</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(adf_test<span class="sc">$</span>p.value <span class="sc">&gt;</span> <span class="fl">0.05</span>) {</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  ts_diff <span class="ot">&lt;-</span> <span class="fu">diff</span>(ts_data)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  adf_diff <span class="ot">&lt;-</span> <span class="fu">adf.test</span>(ts_diff)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"ADF test diferencované řady:"</span>, <span class="fu">round</span>(adf_diff<span class="sc">$</span>p.value, <span class="dv">4</span>)))</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>))</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">acf</span>(ts_diff, <span class="at">main =</span> <span class="st">"ACF diferencované řady"</span>, <span class="at">lag.max =</span> <span class="dv">100</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pacf</span>(ts_diff, <span class="at">main =</span> <span class="st">"PACF diferencované řady"</span>, <span class="at">lag.max =</span> <span class="dv">100</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>  ts_diff <span class="ot">&lt;-</span> ts_data</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in adf.test(ts_diff): p-value smaller than printed p-value</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "ADF test diferencované řady: 0.01"</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-10-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Testování SARIMA kombinací</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Testování vybraných SARIMA kombinací...</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Testování vybraných SARIMA kombinací...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>(auto_sarima_a <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(ts_data)) <span class="co">#sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The time series frequency has been rounded to support seasonal
+differencing.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: ts_data 
+ARIMA(4,0,0)(0,1,0)[365] with drift 
+
+Coefficients:
+         ar1      ar2      ar3      ar4   drift
+      0.1151  -0.0683  -0.1996  -0.1305  0.3404
+s.e.  0.0300   0.0297   0.0297   0.0301  0.0022
+
+sigma^2 = 1190:  log likelihood = -5433.38
+AIC=10878.76   AICc=10878.84   BIC=10908.76</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BIC</span>(auto_sarima_a) <span class="co"># automaticky model rozhodne optimalni neni - je prilis komplikovany</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10908.76</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>(auto_sarima_b <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(ts_data, <span class="at">ic =</span> <span class="st">"bic"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The time series frequency has been rounded to support seasonal
+differencing.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: ts_data 
+ARIMA(4,0,0)(0,1,0)[365] with drift 
+
+Coefficients:
+         ar1      ar2      ar3      ar4   drift
+      0.1151  -0.0683  -0.1996  -0.1305  0.3404
+s.e.  0.0300   0.0297   0.0297   0.0301  0.0022
+
+sigma^2 = 1190:  log likelihood = -5433.38
+AIC=10878.76   AICc=10878.84   BIC=10908.76</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Použijeme auto.arima výsledek jako finální</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>final_sarima <span class="ot">&lt;-</span> auto_sarima_b</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagnostika residuí</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">checkresiduals</span>(final_sarima)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Ljung-Box test
+
+data:  Residuals from ARIMA(4,0,0)(0,1,0)[365] with drift
+Q* = 2355, df = 288, p-value &lt; 2.2e-16
+
+Model df: 4.   Total lags used: 292</code></pre>
+</div>
+</div>
+</section>
+<section id="analýza-závislosti-na-jiných-řadách" class="level4">
+<h4 class="anchored" data-anchor-id="analýza-závislosti-na-jiných-řadách">Analýza závislosti na jiných řadách</h4>
+<p>¨</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Příprava dalších časových řad</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>other_series <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"new_deaths"</span>, <span class="st">"stringency_index"</span>, <span class="st">"hosp_patients"</span>, <span class="st">"reproduction_rate"</span>)</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Křížová korelace s různými zpožděními</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>ccf_results <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>max_lag <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(other_series)) {</span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  y_var <span class="ot">&lt;-</span> data[[other_series[i]]]</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>  y_var <span class="ot">&lt;-</span> y_var[<span class="sc">!</span><span class="fu">is.na</span>(y_var)]</span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  x_var <span class="ot">&lt;-</span> data<span class="sc">$</span>new_cases[<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(y_var)]</span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>  ccf_result <span class="ot">&lt;-</span> <span class="fu">ccf</span>(x_var, y_var, <span class="at">lag.max =</span> max_lag, </span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">main =</span> <span class="fu">paste</span>(<span class="st">"CCF:"</span>, other_series[i]))</span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>  ccf_results[[other_series[i]]] <span class="ot">&lt;-</span> ccf_result</span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identifikace významných korelací</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>significant_lags <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(series <span class="cf">in</span> <span class="fu">names</span>(ccf_results)) {</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  ccf_vals <span class="ot">&lt;-</span> ccf_results[[series]]<span class="sc">$</span>acf</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  lags <span class="ot">&lt;-</span> ccf_results[[series]]<span class="sc">$</span>lag</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 95% interval spolehlivosti (přibližně)</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">length</span>(data<span class="sc">$</span>new_cases)</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  ci <span class="ot">&lt;-</span> <span class="fl">1.96</span><span class="sc">/</span><span class="fu">sqrt</span>(n)</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>  significant_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">abs</span>(ccf_vals) <span class="sc">&gt;</span> ci)</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">length</span>(significant_idx) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    significant_lags[[series]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">lag =</span> lags[significant_idx],</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">correlation =</span> ccf_vals[significant_idx]</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Významné korelace pro"</span>, series, <span class="st">":"</span>))</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(significant_lags[[series]])</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Významné korelace pro new_deaths :"
+   lag correlation
+1  -30   0.7308394
+2  -29   0.7441228
+3  -28   0.7585163
+4  -27   0.7535775
+5  -26   0.7320725
+6  -25   0.7229112
+7  -24   0.7257693
+8  -23   0.7428105
+9  -22   0.7550267
+10 -21   0.7667353
+11 -20   0.7651102
+12 -19   0.7486053
+13 -18   0.7337439
+14 -17   0.7357029
+15 -16   0.7538033
+16 -15   0.7719433
+17 -14   0.7824558
+18 -13   0.7761977
+19 -12   0.7591471
+20 -11   0.7476641
+21 -10   0.7509115
+22  -9   0.7700805
+23  -8   0.7818550
+24  -7   0.7933885
+25  -6   0.7878751
+26  -5   0.7712836
+27  -4   0.7622724
+28  -3   0.7646740
+29  -2   0.7748508
+30  -1   0.7932655
+31   0   0.8247495
+32   1   0.7958679
+33   2   0.7794241
+34   3   0.7641561
+35   4   0.7615994
+36   5   0.7692428
+37   6   0.7861527
+38   7   0.7926900
+39   8   0.7828025
+40   9   0.7632307
+41  10   0.7460604
+42  11   0.7429158
+43  12   0.7511539
+44  13   0.7734618
+45  14   0.7810469
+46  15   0.7700825
+47  16   0.7507249
+48  17   0.7345167
+49  18   0.7317416
+50  19   0.7421800
+51  20   0.7569185
+52  21   0.7659907
+53  22   0.7623391
+54  23   0.7437867
+55  24   0.7298344
+56  25   0.7198007
+57  26   0.7332302
+58  27   0.7497906
+59  28   0.7567494
+60  29   0.7469871
+61  30   0.7308851
+[1] "Významné korelace pro stringency_index :"
+   lag correlation
+1   -6  0.05144379
+2   -5  0.05150682
+3   -4  0.05159823
+4   -3  0.05156391
+5   -2  0.05157917
+6    0  0.05127941
+7    1  0.05128711
+8    2  0.05240919
+9    3  0.05147913
+10   4  0.05144046
+11   5  0.05143393
+12   6  0.05158362
+[1] "Významné korelace pro hosp_patients :"
+   lag correlation
+1  -30   0.8647657
+2  -29   0.8809868
+3  -28   0.8959602
+4  -27   0.8892774
+5  -26   0.8744989
+6  -25   0.8621227
+7  -24   0.8623981
+8  -23   0.8783508
+9  -22   0.9017565
+10 -21   0.9106185
+11 -20   0.9037898
+12 -19   0.8877540
+13 -18   0.8746315
+14 -17   0.8738693
+15 -16   0.8926762
+16 -15   0.9125340
+17 -14   0.9237304
+18 -13   0.9188291
+19 -12   0.9002859
+20 -11   0.8876750
+21 -10   0.8894252
+22  -9   0.9081093
+23  -8   0.9260329
+24  -7   0.9360895
+25  -6   0.9331853
+26  -5   0.9173558
+27  -4   0.9034188
+28  -3   0.9027631
+29  -2   0.9167174
+30  -1   0.9391608
+31   0   0.9759736
+32   1   0.9407249
+33   2   0.9212710
+34   3   0.9030278
+35   4   0.9012837
+36   5   0.9122114
+37   6   0.9294319
+38   7   0.9372811
+39   8   0.9280993
+40   9   0.9097363
+41  10   0.8917235
+42  11   0.8879995
+43  12   0.8973368
+44  13   0.9171036
+45  14   0.9234144
+46  15   0.9129106
+47  16   0.8951836
+48  17   0.8753617
+49  18   0.8731855
+50  19   0.8855593
+51  20   0.8995657
+52  21   0.9095045
+53  22   0.8996417
+54  23   0.8793239
+55  24   0.8641133
+56  25   0.8579053
+57  26   0.8721208
+58  27   0.8899379
+59  28   0.8972323
+60  29   0.8836879
+61  30   0.8657574
+[1] "Významné korelace pro reproduction_rate :"
+   lag correlation
+1  -24  0.05349542
+2  -23  0.05388063
+3  -20  0.05270216
+4  -19  0.05670962
+5  -18  0.05354161
+6  -17  0.05721835
+7  -16  0.05939317
+8  -15  0.05940182
+9  -14  0.05293739
+10 -13  0.05370212
+11 -12  0.05707311
+12 -11  0.05867621
+13 -10  0.05939302
+14  -9  0.06402485
+15  -8  0.05750200
+16  -7  0.05514929
+17  -6  0.05359202
+18  -5  0.05383214
+19  -4  0.05825274
+20  -3  0.05524373
+21  -2  0.05500279
+22  -1  0.05635332
+23   0  0.05222990
+24   1  0.05324772
+25   2  0.05130149
+26   3  0.05994984
+27   4  0.05977847
+28   5  0.05622263
+29   6  0.05446634
+30   7  0.05182617
+31   8  0.05290871
+32  10  0.05271193
+33  12  0.05484402
+34  19  0.05197811</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Příprava zpožděných proměnných na základě CCF analýzy</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>deaths_lag <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">1</span>), data<span class="sc">$</span>new_deaths[<span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(data)<span class="sc">-</span><span class="dv">1</span>)])</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>stringency_lag <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">5</span>), data<span class="sc">$</span>stringency_index[<span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(data)<span class="sc">-</span><span class="dv">5</span>)])</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>hosp_lag <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">2</span>), data<span class="sc">$</span>hosp_patients[<span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(data)<span class="sc">-</span><span class="dv">2</span>)])</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Model s externími regresory</span></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>external_vars <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">deaths_lag =</span> data<span class="sc">$</span>deaths_lag,</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">stringency_lag =</span> data<span class="sc">$</span>stringency_lag,</span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">hosp_lag =</span> data<span class="sc">$</span>hosp_lag</span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Odstranění NA hodnot</span></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>complete_idx <span class="ot">&lt;-</span> <span class="fu">complete.cases</span>(<span class="fu">cbind</span>(data<span class="sc">$</span>new_cases, external_vars))</span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a>ts_complete <span class="ot">&lt;-</span> <span class="fu">ts</span>(data<span class="sc">$</span>new_cases[complete_idx], <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">2020</span>, <span class="dv">1</span>), <span class="at">frequency =</span> <span class="fl">365.25</span>)</span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>external_complete <span class="ot">&lt;-</span> external_vars[complete_idx, ]</span>
+<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ARIMAX model</span></span>
+<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>arimax_model <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(ts_complete, <span class="at">xreg =</span> external_complete)</span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(arimax_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: ts_complete 
+Regression with ARIMA(5,1,1) errors 
+
+Coefficients:
+          ar1      ar2      ar3      ar4      ar5      ma1   drift  deaths_lag
+      -0.0727  -0.2513  -0.3869  -0.3683  -0.2486  -0.7338  0.3368      0.1185
+s.e.   0.0389   0.0297   0.0249   0.0279   0.0322   0.0354  0.0781      0.3238
+      stringency_lag  hosp_lag
+              0.5939    0.0347
+s.e.          0.1208    0.1288
+
+sigma^2 = 672.9:  log likelihood = -6798.37
+AIC=13618.75   AICc=13618.93   BIC=13676.86
+
+Training set error measures:
+                     ME     RMSE      MAE MPE MAPE      MASE        ACF1
+Training set 0.01279439 25.84287 20.64813 NaN  Inf 0.1661069 -0.01453415</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># VAR model pro srovnání</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>var_data <span class="ot">&lt;-</span> data[complete_idx, <span class="fu">c</span>(<span class="st">"new_cases"</span>, <span class="st">"new_deaths"</span>, <span class="st">"stringency_index"</span>, <span class="st">"hosp_patients"</span>)]</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>var_data <span class="ot">&lt;-</span> var_data[<span class="fu">complete.cases</span>(var_data), ]</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Optimální lag pro VAR</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>var_select <span class="ot">&lt;-</span> <span class="fu">VARselect</span>(var_data, <span class="at">lag.max =</span> <span class="dv">10</span>, <span class="at">type =</span> <span class="st">"both"</span>)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(var_select<span class="sc">$</span>selection)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AIC(n)  HQ(n)  SC(n) FPE(n) 
+    10      7      4     10 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>optimal_lag <span class="ot">&lt;-</span> var_select<span class="sc">$</span>selection[<span class="st">"AIC(n)"</span>]</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>var_model <span class="ot">&lt;-</span> <span class="fu">VAR</span>(var_data, <span class="at">p =</span> optimal_lag, <span class="at">type =</span> <span class="st">"both"</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(var_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+VAR Estimation Results:
+========================= 
+Endogenous variables: new_cases, new_deaths, stringency_index, hosp_patients 
+Deterministic variables: both 
+Sample size: 1446 
+Log Likelihood: -18230.482 
+Roots of the characteristic polynomial:
+0.9979 0.9636 0.9636 0.8454 0.8454 0.808 0.808 0.7987 0.7987 0.7756 0.7678 0.7678 0.7519 0.7519 0.7456 0.7456 0.7408 0.7408 0.7355 0.7355 0.731 0.731 0.7182 0.7182 0.7107 0.7107 0.7028 0.7028 0.687 0.687 0.6792 0.6792 0.6733 0.6733 0.6468 0.6468 0.5266 0.5266 0.3426 0.3426
+Call:
+VAR(y = var_data, p = optimal_lag, type = "both")
+
+
+Estimation results for equation new_cases: 
+========================================== 
+new_cases = new_cases.l1 + new_deaths.l1 + stringency_index.l1 + hosp_patients.l1 + new_cases.l2 + new_deaths.l2 + stringency_index.l2 + hosp_patients.l2 + new_cases.l3 + new_deaths.l3 + stringency_index.l3 + hosp_patients.l3 + new_cases.l4 + new_deaths.l4 + stringency_index.l4 + hosp_patients.l4 + new_cases.l5 + new_deaths.l5 + stringency_index.l5 + hosp_patients.l5 + new_cases.l6 + new_deaths.l6 + stringency_index.l6 + hosp_patients.l6 + new_cases.l7 + new_deaths.l7 + stringency_index.l7 + hosp_patients.l7 + new_cases.l8 + new_deaths.l8 + stringency_index.l8 + hosp_patients.l8 + new_cases.l9 + new_deaths.l9 + stringency_index.l9 + hosp_patients.l9 + new_cases.l10 + new_deaths.l10 + stringency_index.l10 + hosp_patients.l10 + const + trend 
+
+                       Estimate Std. Error t value Pr(&gt;|t|)    
+new_cases.l1          1.412e-01  3.527e-02   4.003 6.57e-05 ***
+new_deaths.l1         2.109e-01  3.495e-01   0.603 0.546306    
+stringency_index.l1   2.084e-01  1.377e-01   1.513 0.130381    
+hosp_patients.l1     -1.356e-01  1.368e-01  -0.991 0.321903    
+new_cases.l2         -5.101e-02  3.545e-02  -1.439 0.150454    
+new_deaths.l2         2.431e-01  3.498e-01   0.695 0.487167    
+stringency_index.l2   3.306e-01  1.402e-01   2.358 0.018517 *  
+hosp_patients.l2      2.122e-02  1.366e-01   0.155 0.876535    
+new_cases.l3         -1.207e-01  3.532e-02  -3.416 0.000654 ***
+new_deaths.l3         5.444e-02  3.498e-01   0.156 0.876348    
+stringency_index.l3   7.436e-02  1.458e-01   0.510 0.610179    
+hosp_patients.l3     -1.559e-01  1.368e-01  -1.140 0.254682    
+new_cases.l4         -8.438e-02  3.501e-02  -2.410 0.016092 *  
+new_deaths.l4        -2.264e-01  3.502e-01  -0.646 0.518098    
+stringency_index.l4   2.121e-01  1.477e-01   1.436 0.151128    
+hosp_patients.l4     -7.729e-02  1.368e-01  -0.565 0.572095    
+new_cases.l5          5.153e-02  3.495e-02   1.474 0.140599    
+new_deaths.l5        -6.077e-01  3.501e-01  -1.736 0.082809 .  
+stringency_index.l5   2.830e-01  1.479e-01   1.914 0.055883 .  
+hosp_patients.l5     -1.807e-01  1.364e-01  -1.325 0.185402    
+new_cases.l6          1.215e-01  3.500e-02   3.470 0.000536 ***
+new_deaths.l6         8.792e-02  3.516e-01   0.250 0.802600    
+stringency_index.l6   2.621e-01  1.480e-01   1.772 0.076640 .  
+hosp_patients.l6      3.857e-02  1.362e-01   0.283 0.777169    
+new_cases.l7          1.719e-01  3.509e-02   4.899 1.08e-06 ***
+new_deaths.l7        -6.998e-04  3.521e-01  -0.002 0.998414    
+stringency_index.l7   2.139e-01  1.476e-01   1.450 0.147395    
+hosp_patients.l7      1.020e-01  1.363e-01   0.748 0.454490    
+new_cases.l8          1.781e-01  3.508e-02   5.078 4.33e-07 ***
+new_deaths.l8        -1.689e-01  3.538e-01  -0.478 0.633049    
+stringency_index.l8   3.019e-02  1.454e-01   0.208 0.835525    
+hosp_patients.l8     -1.186e-01  1.364e-01  -0.869 0.384790    
+new_cases.l9          1.413e-02  3.536e-02   0.400 0.689532    
+new_deaths.l9        -3.664e-01  3.530e-01  -1.038 0.299551    
+stringency_index.l9  -3.593e-01  1.395e-01  -2.575 0.010136 *  
+hosp_patients.l9      1.192e-01  1.362e-01   0.875 0.381901    
+new_cases.l10        -1.758e-01  3.515e-02  -5.000 6.46e-07 ***
+new_deaths.l10       -1.508e-01  3.536e-01  -0.427 0.669761    
+stringency_index.l10 -1.817e-01  1.375e-01  -1.321 0.186634    
+hosp_patients.l10     1.832e-01  1.363e-01   1.345 0.178980    
+const                -3.088e+01  3.795e+00  -8.137 8.83e-16 ***
+trend                 2.731e-01  2.754e-02   9.916  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 24.76 on 1404 degrees of freedom
+Multiple R-Squared: 0.9709, Adjusted R-squared: 0.9701 
+F-statistic:  1144 on 41 and 1404 DF,  p-value: &lt; 2.2e-16 
+
+
+Estimation results for equation new_deaths: 
+=========================================== 
+new_deaths = new_cases.l1 + new_deaths.l1 + stringency_index.l1 + hosp_patients.l1 + new_cases.l2 + new_deaths.l2 + stringency_index.l2 + hosp_patients.l2 + new_cases.l3 + new_deaths.l3 + stringency_index.l3 + hosp_patients.l3 + new_cases.l4 + new_deaths.l4 + stringency_index.l4 + hosp_patients.l4 + new_cases.l5 + new_deaths.l5 + stringency_index.l5 + hosp_patients.l5 + new_cases.l6 + new_deaths.l6 + stringency_index.l6 + hosp_patients.l6 + new_cases.l7 + new_deaths.l7 + stringency_index.l7 + hosp_patients.l7 + new_cases.l8 + new_deaths.l8 + stringency_index.l8 + hosp_patients.l8 + new_cases.l9 + new_deaths.l9 + stringency_index.l9 + hosp_patients.l9 + new_cases.l10 + new_deaths.l10 + stringency_index.l10 + hosp_patients.l10 + const + trend 
+
+                       Estimate Std. Error t value Pr(&gt;|t|)  
+new_cases.l1          2.236e-03  2.793e-03   0.801   0.4235  
+new_deaths.l1        -1.427e-02  2.767e-02  -0.516   0.6061  
+stringency_index.l1   2.722e-02  1.090e-02   2.497   0.0126 *
+hosp_patients.l1     -5.072e-03  1.084e-02  -0.468   0.6398  
+new_cases.l2         -9.733e-04  2.808e-03  -0.347   0.7289  
+new_deaths.l2        -2.117e-03  2.770e-02  -0.076   0.9391  
+stringency_index.l2  -9.075e-03  1.110e-02  -0.817   0.4138  
+hosp_patients.l2     -9.926e-03  1.082e-02  -0.918   0.3589  
+new_cases.l3         -1.589e-03  2.797e-03  -0.568   0.5700  
+new_deaths.l3         2.270e-04  2.770e-02   0.008   0.9935  
+stringency_index.l3  -8.526e-03  1.155e-02  -0.738   0.4604  
+hosp_patients.l3     -2.950e-03  1.083e-02  -0.272   0.7854  
+new_cases.l4         -1.676e-03  2.773e-03  -0.604   0.5456  
+new_deaths.l4         1.755e-02  2.773e-02   0.633   0.5268  
+stringency_index.l4   1.037e-02  1.169e-02   0.887   0.3752  
+hosp_patients.l4     -5.886e-03  1.083e-02  -0.543   0.5869  
+new_cases.l5         -1.886e-03  2.767e-03  -0.681   0.4957  
+new_deaths.l5         1.471e-02  2.772e-02   0.531   0.5958  
+stringency_index.l5   3.220e-03  1.171e-02   0.275   0.7834  
+hosp_patients.l5     -9.464e-05  1.080e-02  -0.009   0.9930  
+new_cases.l6          6.339e-03  2.772e-03   2.287   0.0224 *
+new_deaths.l6        -5.667e-04  2.784e-02  -0.020   0.9838  
+stringency_index.l6  -2.784e-03  1.172e-02  -0.238   0.8122  
+hosp_patients.l6     -1.521e-02  1.079e-02  -1.410   0.1589  
+new_cases.l7          4.186e-03  2.778e-03   1.507   0.1321  
+new_deaths.l7         1.423e-02  2.788e-02   0.510   0.6098  
+stringency_index.l7   1.352e-02  1.169e-02   1.157   0.2473  
+hosp_patients.l7      6.729e-03  1.079e-02   0.624   0.5330  
+new_cases.l8          1.955e-04  2.778e-03   0.070   0.9439  
+new_deaths.l8        -3.443e-02  2.801e-02  -1.229   0.2192  
+stringency_index.l8   3.068e-03  1.151e-02   0.267   0.7899  
+hosp_patients.l8      1.286e-02  1.080e-02   1.190   0.2342  
+new_cases.l9          4.142e-03  2.800e-03   1.479   0.1393  
+new_deaths.l9        -1.385e-02  2.796e-02  -0.495   0.6204  
+stringency_index.l9  -2.076e-02  1.105e-02  -1.879   0.0604 .
+hosp_patients.l9     -1.127e-03  1.079e-02  -0.104   0.9168  
+new_cases.l10        -4.600e-03  2.784e-03  -1.652   0.0987 .
+new_deaths.l10       -1.073e-02  2.800e-02  -0.383   0.7017  
+stringency_index.l10  1.385e-03  1.089e-02   0.127   0.8988  
+hosp_patients.l10     8.135e-03  1.079e-02   0.754   0.4511  
+const                -1.219e-01  3.005e-01  -0.406   0.6851  
+trend                 5.090e-03  2.181e-03   2.334   0.0197 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 1.961 on 1404 degrees of freedom
+Multiple R-Squared: 0.6575, Adjusted R-squared: 0.6475 
+F-statistic: 65.75 on 41 and 1404 DF,  p-value: &lt; 2.2e-16 
+
+
+Estimation results for equation stringency_index: 
+================================================= 
+stringency_index = new_cases.l1 + new_deaths.l1 + stringency_index.l1 + hosp_patients.l1 + new_cases.l2 + new_deaths.l2 + stringency_index.l2 + hosp_patients.l2 + new_cases.l3 + new_deaths.l3 + stringency_index.l3 + hosp_patients.l3 + new_cases.l4 + new_deaths.l4 + stringency_index.l4 + hosp_patients.l4 + new_cases.l5 + new_deaths.l5 + stringency_index.l5 + hosp_patients.l5 + new_cases.l6 + new_deaths.l6 + stringency_index.l6 + hosp_patients.l6 + new_cases.l7 + new_deaths.l7 + stringency_index.l7 + hosp_patients.l7 + new_cases.l8 + new_deaths.l8 + stringency_index.l8 + hosp_patients.l8 + new_cases.l9 + new_deaths.l9 + stringency_index.l9 + hosp_patients.l9 + new_cases.l10 + new_deaths.l10 + stringency_index.l10 + hosp_patients.l10 + const + trend 
+
+                       Estimate Std. Error t value Pr(&gt;|t|)    
+new_cases.l1          3.097e-03  6.852e-03   0.452 0.651328    
+new_deaths.l1         1.522e-01  6.790e-02   2.241 0.025193 *  
+stringency_index.l1   1.884e-01  2.675e-02   7.044 2.93e-12 ***
+hosp_patients.l1      5.666e-03  2.659e-02   0.213 0.831266    
+new_cases.l2          9.152e-03  6.889e-03   1.328 0.184245    
+new_deaths.l2         1.787e-02  6.797e-02   0.263 0.792637    
+stringency_index.l2   2.897e-01  2.724e-02  10.635  &lt; 2e-16 ***
+hosp_patients.l2      1.370e-02  2.654e-02   0.516 0.605838    
+new_cases.l3          4.331e-03  6.863e-03   0.631 0.528079    
+new_deaths.l3        -5.069e-02  6.797e-02  -0.746 0.455954    
+stringency_index.l3   1.854e-01  2.834e-02   6.542 8.48e-11 ***
+hosp_patients.l3      3.453e-02  2.658e-02   1.299 0.194192    
+new_cases.l4          6.488e-03  6.803e-03   0.954 0.340424    
+new_deaths.l4        -7.254e-02  6.804e-02  -1.066 0.286507    
+stringency_index.l4   9.890e-02  2.869e-02   3.447 0.000584 ***
+hosp_patients.l4      1.485e-02  2.658e-02   0.559 0.576397    
+new_cases.l5          1.736e-02  6.790e-03   2.557 0.010666 *  
+new_deaths.l5        -4.607e-02  6.803e-02  -0.677 0.498369    
+stringency_index.l5   1.150e-01  2.874e-02   4.003 6.58e-05 ***
+hosp_patients.l5     -4.313e-02  2.649e-02  -1.628 0.103779    
+new_cases.l6          1.170e-02  6.801e-03   1.721 0.085555 .  
+new_deaths.l6        -8.618e-02  6.832e-02  -1.261 0.207405    
+stringency_index.l6   4.363e-02  2.875e-02   1.518 0.129265    
+hosp_patients.l6      1.473e-02  2.647e-02   0.557 0.577916    
+new_cases.l7         -6.314e-04  6.817e-03  -0.093 0.926213    
+new_deaths.l7         1.885e-02  6.841e-02   0.276 0.782956    
+stringency_index.l7   2.189e-02  2.867e-02   0.763 0.445341    
+hosp_patients.l7     -3.492e-02  2.648e-02  -1.319 0.187461    
+new_cases.l8          8.003e-05  6.816e-03   0.012 0.990634    
+new_deaths.l8         8.109e-03  6.874e-02   0.118 0.906114    
+stringency_index.l8  -3.712e-03  2.825e-02  -0.131 0.895469    
+hosp_patients.l8      9.066e-03  2.651e-02   0.342 0.732415    
+new_cases.l9         -6.531e-03  6.870e-03  -0.951 0.341911    
+new_deaths.l9         5.245e-02  6.859e-02   0.765 0.444596    
+stringency_index.l9  -2.272e-03  2.711e-02  -0.084 0.933232    
+hosp_patients.l9      3.411e-02  2.647e-02   1.289 0.197664    
+new_cases.l10        -9.089e-03  6.830e-03  -1.331 0.183491    
+new_deaths.l10        4.786e-02  6.871e-02   0.697 0.486162    
+stringency_index.l10 -4.257e-03  2.673e-02  -0.159 0.873476    
+hosp_patients.l10     1.044e-02  2.648e-02   0.394 0.693532    
+const                 2.026e+00  7.373e-01   2.747 0.006083 ** 
+trend                -1.557e-02  5.351e-03  -2.910 0.003665 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 4.812 on 1404 degrees of freedom
+Multiple R-Squared: 0.9682, Adjusted R-squared: 0.9672 
+F-statistic:  1041 on 41 and 1404 DF,  p-value: &lt; 2.2e-16 
+
+
+Estimation results for equation hosp_patients: 
+============================================== 
+hosp_patients = new_cases.l1 + new_deaths.l1 + stringency_index.l1 + hosp_patients.l1 + new_cases.l2 + new_deaths.l2 + stringency_index.l2 + hosp_patients.l2 + new_cases.l3 + new_deaths.l3 + stringency_index.l3 + hosp_patients.l3 + new_cases.l4 + new_deaths.l4 + stringency_index.l4 + hosp_patients.l4 + new_cases.l5 + new_deaths.l5 + stringency_index.l5 + hosp_patients.l5 + new_cases.l6 + new_deaths.l6 + stringency_index.l6 + hosp_patients.l6 + new_cases.l7 + new_deaths.l7 + stringency_index.l7 + hosp_patients.l7 + new_cases.l8 + new_deaths.l8 + stringency_index.l8 + hosp_patients.l8 + new_cases.l9 + new_deaths.l9 + stringency_index.l9 + hosp_patients.l9 + new_cases.l10 + new_deaths.l10 + stringency_index.l10 + hosp_patients.l10 + const + trend 
+
+                      Estimate Std. Error t value Pr(&gt;|t|)    
+new_cases.l1          0.026565   0.008894   2.987  0.00287 ** 
+new_deaths.l1        -0.013833   0.088143  -0.157  0.87532    
+stringency_index.l1   0.020245   0.034724   0.583  0.55997    
+hosp_patients.l1     -0.039197   0.034512  -1.136  0.25626    
+new_cases.l2         -0.023373   0.008942  -2.614  0.00905 ** 
+new_deaths.l2         0.035788   0.088223   0.406  0.68506    
+stringency_index.l2   0.086932   0.035361   2.458  0.01407 *  
+hosp_patients.l2      0.058681   0.034448   1.703  0.08870 .  
+new_cases.l3         -0.017017   0.008909  -1.910  0.05631 .  
+new_deaths.l3         0.009559   0.088224   0.108  0.91374    
+stringency_index.l3   0.020649   0.036780   0.561  0.57461    
+hosp_patients.l3     -0.034654   0.034505  -1.004  0.31540    
+new_cases.l4         -0.010616   0.008831  -1.202  0.22953    
+new_deaths.l4        -0.083209   0.088315  -0.942  0.34626    
+stringency_index.l4   0.068592   0.037244   1.842  0.06573 .  
+hosp_patients.l4     -0.017295   0.034496  -0.501  0.61619    
+new_cases.l5          0.013349   0.008814   1.515  0.13011    
+new_deaths.l5        -0.223067   0.088299  -2.526  0.01164 *  
+stringency_index.l5   0.045367   0.037303   1.216  0.22412    
+hosp_patients.l5     -0.014687   0.034391  -0.427  0.66940    
+new_cases.l6          0.024519   0.008828   2.777  0.00555 ** 
+new_deaths.l6         0.144253   0.088684   1.627  0.10405    
+stringency_index.l6   0.011298   0.037314   0.303  0.76211    
+hosp_patients.l6      0.008834   0.034363   0.257  0.79716    
+new_cases.l7          0.023967   0.008849   2.708  0.00684 ** 
+new_deaths.l7         0.101240   0.088794   1.140  0.25441    
+stringency_index.l7   0.049771   0.037217   1.337  0.18134    
+hosp_patients.l7     -0.009066   0.034370  -0.264  0.79199    
+new_cases.l8          0.027799   0.008848   3.142  0.00171 ** 
+new_deaths.l8        -0.045567   0.089227  -0.511  0.60965    
+stringency_index.l8  -0.002715   0.036665  -0.074  0.94097    
+hosp_patients.l8     -0.029851   0.034410  -0.868  0.38581    
+new_cases.l9          0.008192   0.008917   0.919  0.35844    
+new_deaths.l9         0.062708   0.089037   0.704  0.48137    
+stringency_index.l9  -0.090405   0.035193  -2.569  0.01031 *  
+hosp_patients.l9      0.023707   0.034357   0.690  0.49030    
+new_cases.l10        -0.036861   0.008866  -4.158 3.41e-05 ***
+new_deaths.l10        0.020533   0.089189   0.230  0.81795    
+stringency_index.l10 -0.059496   0.034691  -1.715  0.08656 .  
+hosp_patients.l10     0.042360   0.034370   1.232  0.21798    
+const                -4.126454   0.957070  -4.312 1.73e-05 ***
+trend                 0.038982   0.006946   5.612 2.40e-08 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 6.246 on 1404 degrees of freedom
+Multiple R-Squared: 0.9217, Adjusted R-squared: 0.9194 
+F-statistic: 403.3 on 41 and 1404 DF,  p-value: &lt; 2.2e-16 
+
+
+
+Covariance matrix of residuals:
+                 new_cases new_deaths stringency_index hosp_patients
+new_cases          613.271    12.5533           6.8737       98.1122
+new_deaths          12.553     3.8455           0.4329        1.8069
+stringency_index     6.874     0.4329          23.1525        0.2262
+hosp_patients       98.112     1.8069           0.2262       39.0093
+
+Correlation matrix of residuals:
+                 new_cases new_deaths stringency_index hosp_patients
+new_cases          1.00000    0.25850         0.057686      0.634327
+new_deaths         0.25850    1.00000         0.045884      0.147531
+stringency_index   0.05769    0.04588         1.000000      0.007526
+hosp_patients      0.63433    0.14753         0.007526      1.000000</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Srovnání modelů</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>models_comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">"Funkční"</span>, <span class="st">"SARIMA"</span>, <span class="st">"ARIMAX"</span>, <span class="st">"VAR"</span>),</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">AIC =</span> <span class="fu">c</span>(<span class="fu">AIC</span>(best_func_model), <span class="fu">AIC</span>(final_sarima), <span class="fu">AIC</span>(arimax_model), <span class="fu">AIC</span>(var_model)),</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">BIC =</span> <span class="fu">c</span>(<span class="fu">BIC</span>(best_func_model), <span class="fu">BIC</span>(final_sarima), <span class="fu">BIC</span>(arimax_model), <span class="fu">BIC</span>(var_model))</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(models_comparison)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Model      AIC      BIC
+1 Funkční 13224.16 13266.46
+2  SARIMA 10878.76 10908.76
+3  ARIMAX 13618.75 13676.86
+4     VAR 36796.96 37683.43</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagnostika residuí pro všechny modely</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>models_to_check <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Funkční"</span> <span class="ot">=</span> best_func_model,</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"SARIMA"</span> <span class="ot">=</span> final_sarima,</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ARIMAX"</span> <span class="ot">=</span> arimax_model</span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(model_name <span class="cf">in</span> <span class="fu">names</span>(models_to_check)) {</span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>  model <span class="ot">&lt;-</span> models_to_check[[model_name]]</span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">inherits</span>(model, <span class="st">"lm"</span>)) {</span>
+<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a>    residuals <span class="ot">&lt;-</span> <span class="fu">residuals</span>(model)</span>
+<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a>    residuals <span class="ot">&lt;-</span> <span class="fu">residuals</span>(model)</span>
+<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ACF residuí</span></span>
+<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">acf</span>(residuals, <span class="at">main =</span> <span class="fu">paste</span>(<span class="st">"ACF residuí -"</span>, model_name), <span class="at">lag.max =</span> <span class="dv">50</span>)</span>
+<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Ljung-Box test</span></span>
+<span id="cb59-21"><a href="#cb59-21" aria-hidden="true" tabindex="-1"></a>  lb_test <span class="ot">&lt;-</span> <span class="fu">Box.test</span>(residuals, <span class="at">lag =</span> <span class="dv">20</span>, <span class="at">type =</span> <span class="st">"Ljung-Box"</span>)</span>
+<span id="cb59-22"><a href="#cb59-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste</span>(model_name, <span class="st">"- Ljung-Box test p-hodnota:"</span>, <span class="fu">round</span>(lb_test<span class="sc">$</span>p.value, <span class="dv">4</span>)))</span>
+<span id="cb59-23"><a href="#cb59-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Normalita residuí</span></span>
+<span id="cb59-24"><a href="#cb59-24" aria-hidden="true" tabindex="-1"></a>  shapiro_test <span class="ot">&lt;-</span> <span class="fu">shapiro.test</span>(<span class="fu">sample</span>(residuals, <span class="fu">min</span>(<span class="dv">5000</span>, <span class="fu">length</span>(residuals))))</span>
+<span id="cb59-25"><a href="#cb59-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste</span>(model_name, <span class="st">"- Shapiro test p-hodnota:"</span>, <span class="fu">round</span>(shapiro_test<span class="sc">$</span>p.value, <span class="dv">4</span>)))</span>
+<span id="cb59-26"><a href="#cb59-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Funkční - Ljung-Box test p-hodnota: 0.4047"
+[1] "Funkční - Shapiro test p-hodnota: 0.6488"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "SARIMA - Ljung-Box test p-hodnota: 0"
+[1] "SARIMA - Shapiro test p-hodnota: 0"</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "ARIMAX - Ljung-Box test p-hodnota: 0"
+[1] "ARIMAX - Shapiro test p-hodnota: 0.8035"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># QQ plots pro normalitu</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-12-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(model_name <span class="cf">in</span> <span class="fu">names</span>(models_to_check)) {</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>  model <span class="ot">&lt;-</span> models_to_check[[model_name]]</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>  residuals <span class="ot">&lt;-</span> <span class="fu">residuals</span>(model)</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qqnorm</span>(residuals, <span class="at">main =</span> <span class="fu">paste</span>(<span class="st">"Q-Q plot -"</span>, model_name))</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qqline</span>(residuals)</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-12-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="predikce-budoucích-hodnot" class="level4">
+<h4 class="anchored" data-anchor-id="predikce-budoucích-hodnot">Predikce budoucích hodnot</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predikce na 10 období dopředu</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>horizon <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Funkční model predikce</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>future_t <span class="ot">&lt;-</span> (<span class="fu">nrow</span>(data)<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span>(<span class="fu">nrow</span>(data)<span class="sc">+</span>horizon)</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>future_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">t =</span> future_t,</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">sin_365 =</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> future_t <span class="sc">/</span> <span class="fl">365.25</span>),</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cos_365 =</span> <span class="fu">cos</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> future_t <span class="sc">/</span> <span class="fl">365.25</span>),</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">sin_7 =</span> <span class="fu">sin</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> future_t <span class="sc">/</span> <span class="dv">7</span>),</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cos_7 =</span> <span class="fu">cos</span>(<span class="dv">2</span> <span class="sc">*</span> pi <span class="sc">*</span> future_t <span class="sc">/</span> <span class="dv">7</span>)</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Jednoduchá predikce bez složitého rozlišování modelů</span></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>pred_func <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>(best_func_model, <span class="at">newdata =</span> future_data, <span class="at">interval =</span> <span class="st">"prediction"</span>)</span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Chyba při predikci funkčního modelu:"</span>, e<span class="sc">$</span>message, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Náhradní predikce - jen fit bez intervalů</span></span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>  fit_values <span class="ot">&lt;-</span> <span class="fu">predict</span>(best_func_model, <span class="at">newdata =</span> future_data)</span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Vytvoříme jednoduché intervaly na základě residuální std. chyby</span></span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>  residual_se <span class="ot">&lt;-</span> <span class="fu">summary</span>(best_func_model)<span class="sc">$</span>sigma</span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">fit =</span> fit_values, </span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">lwr =</span> fit_values <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> residual_se, </span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">upr =</span> fit_values <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> residual_se)</span>
+<span id="cb65-24"><a href="#cb65-24" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb65-25"><a href="#cb65-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-26"><a href="#cb65-26" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Funkční model - predikce dokončena</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Funkční model - predikce dokončena</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co"># SARIMA predikce</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>pred_sarima <span class="ot">&lt;-</span> <span class="fu">forecast</span>(final_sarima, <span class="at">h =</span> horizon)</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ARIMAX predikce (potřebujeme budoucí hodnoty externích proměnných)</span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Pro zjednodušení použijeme poslední dostupné hodnoty</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>last_external <span class="ot">&lt;-</span> external_complete[<span class="fu">nrow</span>(external_complete), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>future_external <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="fu">as.numeric</span>(last_external), horizon), </span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">nrow =</span> horizon, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Zajistíme správné názvy sloupců</span></span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(future_external) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(external_complete)</span>
+<span id="cb67-12"><a href="#cb67-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-13"><a href="#cb67-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Názvy sloupců v trénovacích datech:"</span>, <span class="fu">colnames</span>(external_complete), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Názvy sloupců v trénovacích datech: deaths_lag stringency_lag hosp_lag </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Názvy sloupců v predikčních datech:"</span>, <span class="fu">colnames</span>(future_external), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Názvy sloupců v predikčních datech: deaths_lag stringency_lag hosp_lag </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>pred_arimax <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forecast</span>(arimax_model, <span class="at">xreg =</span> future_external, <span class="at">h =</span> horizon)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Chyba při ARIMAX predikci:"</span>, e<span class="sc">$</span>message, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Náhradní predikce bez externích regresorů</span></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forecast</span>(final_sarima, <span class="at">h =</span> horizon)</span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ARIMAX predikce dokončena</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>ARIMAX predikce dokončena</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Grafické zobrazení predikcí</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>future_dates <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">max</span>(data<span class="sc">$</span>date) <span class="sc">+</span> <span class="dv">1</span>, <span class="at">by =</span> <span class="st">"day"</span>, <span class="at">length.out =</span> horizon)</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Příprava dat pro graf</span></span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">date =</span> <span class="fu">c</span>(<span class="fu">tail</span>(data<span class="sc">$</span>date, <span class="dv">50</span>), future_dates),</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">actual =</span> <span class="fu">c</span>(<span class="fu">tail</span>(data<span class="sc">$</span>new_cases, <span class="dv">50</span>), <span class="fu">rep</span>(<span class="cn">NA</span>, horizon)),</span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">func_pred =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_func[,<span class="dv">1</span>]),</span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">func_lower =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_func[,<span class="dv">2</span>]),</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">func_upper =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_func[,<span class="dv">3</span>]),</span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sarima_pred =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_sarima<span class="sc">$</span>mean),</span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">sarima_lower =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_sarima<span class="sc">$</span>lower[,<span class="dv">2</span>]),</span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">sarima_upper =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_sarima<span class="sc">$</span>upper[,<span class="dv">2</span>]),</span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">arimax_pred =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_arimax<span class="sc">$</span>mean),</span>
+<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">arimax_lower =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_arimax<span class="sc">$</span>lower[,<span class="dv">2</span>]),</span>
+<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">arimax_upper =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">50</span>), pred_arimax<span class="sc">$</span>upper[,<span class="dv">2</span>])</span>
+<span id="cb73-17"><a href="#cb73-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb73-18"><a href="#cb73-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-19"><a href="#cb73-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Graf predikcí</span></span>
+<span id="cb73-20"><a href="#cb73-20" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_data, <span class="fu">aes</span>(<span class="at">x =</span> date)) <span class="sc">+</span></span>
+<span id="cb73-21"><a href="#cb73-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> actual), <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb73-22"><a href="#cb73-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> func_pred), <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb73-23"><a href="#cb73-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> func_lower, <span class="at">ymax =</span> func_upper), <span class="at">fill =</span> <span class="st">"red"</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb73-24"><a href="#cb73-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> sarima_pred), <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb73-25"><a href="#cb73-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> sarima_lower, <span class="at">ymax =</span> sarima_upper), <span class="at">fill =</span> <span class="st">"blue"</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb73-26"><a href="#cb73-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> arimax_pred), <span class="at">color =</span> <span class="st">"green"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb73-27"><a href="#cb73-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> arimax_lower, <span class="at">ymax =</span> arimax_upper), <span class="at">fill =</span> <span class="st">"green"</span>, <span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb73-28"><a href="#cb73-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">max</span>(data<span class="sc">$</span>date), <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb73-29"><a href="#cb73-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Predikce nových případů - srovnání modelů"</span>,</span>
+<span id="cb73-30"><a href="#cb73-30" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Datum"</span>, <span class="at">y =</span> <span class="st">"Počet případů"</span>,</span>
+<span id="cb73-31"><a href="#cb73-31" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Červená: Funkční model, Modrá: SARIMA, Zelená: ARIMAX"</span>) <span class="sc">+</span></span>
+<span id="cb73-32"><a href="#cb73-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb73-33"><a href="#cb73-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 10 rows containing missing values or values outside the scale range
+(`geom_line()`).</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 50 rows containing missing values or values outside the scale range
+(`geom_line()`).
+Removed 50 rows containing missing values or values outside the scale range
+(`geom_line()`).
+Removed 50 rows containing missing values or values outside the scale range
+(`geom_line()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="covid_data_analyse_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Výpis číselných predikcí</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>predictions_summary <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Datum =</span> future_dates,</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  Funkční <span class="ot">=</span> <span class="fu">round</span>(pred_func[,<span class="dv">1</span>], <span class="dv">0</span>),</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">SARIMA =</span> <span class="fu">round</span>(pred_sarima<span class="sc">$</span>mean, <span class="dv">0</span>),</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">ARIMAX =</span> <span class="fu">round</span>(pred_arimax<span class="sc">$</span>mean, <span class="dv">0</span>)</span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Predikce na příštích 10 dní:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Predikce na příštích 10 dní:"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(predictions_summary)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        Datum Funkční SARIMA ARIMAX
+1  2024-01-01     489    479    475
+2  2024-01-02     474    500    466
+3  2024-01-03     481    491    477
+4  2024-01-04     505    473    506
+5  2024-01-05     529    543    524
+6  2024-01-06     536    537    518
+7  2024-01-07     522    538    502
+8  2024-01-08     498    507    485
+9  2024-01-09     483    514    479
+10 2024-01-10     489    480    489</code></pre>
+</div>
+</div>
+</section>
+<section id="závěrečné-srovnání-a-doporučení" class="level4">
+<h4 class="anchored" data-anchor-id="závěrečné-srovnání-a-doporučení">Závěrečné srovnání a doporučení</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Finální srovnání všech modelů</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>final_comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">"Funkční (trend+sezónost)"</span>, <span class="st">"SARIMA"</span>, <span class="st">"ARIMAX"</span>),</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">AIC =</span> <span class="fu">c</span>(<span class="fu">AIC</span>(best_func_model), <span class="fu">AIC</span>(final_sarima), <span class="fu">AIC</span>(arimax_model)),</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">BIC =</span> <span class="fu">c</span>(<span class="fu">BIC</span>(best_func_model), <span class="fu">BIC</span>(final_sarima), <span class="fu">BIC</span>(arimax_model)),</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>  Parametrů <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">length</span>(<span class="fu">coef</span>(best_func_model)), </span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">length</span>(<span class="fu">coef</span>(final_sarima)),</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">length</span>(<span class="fu">coef</span>(arimax_model))),</span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fu">c</span>(</span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">mean</span>(<span class="fu">residuals</span>(best_func_model)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">mean</span>(<span class="fu">residuals</span>(final_sarima)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">mean</span>(<span class="fu">residuals</span>(arimax_model)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Finální srovnání modelů:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finální srovnání modelů:"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(final_comparison)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                     Model      AIC      BIC Parametrů     RMSE
+1 Funkční (trend+sezónost) 13224.16 13266.46         7 22.22701
+2                   SARIMA 10878.76 10908.76         5 29.80521
+3                   ARIMAX 13618.75 13676.86        10 25.84287</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Doporučení nejlepšího modelu</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>best_model_idx <span class="ot">&lt;-</span> <span class="fu">which.min</span>(final_comparison<span class="sc">$</span>AIC)</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>best_model_name <span class="ot">&lt;-</span> final_comparison<span class="sc">$</span>Model[best_model_idx]</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">=== DOPORUČENÍ ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== DOPORUČENÍ ===</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Nejlepší model podle AIC:"</span>, best_model_name, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Nejlepší model podle AIC: SARIMA </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"AIC:"</span>, <span class="fu">round</span>(final_comparison<span class="sc">$</span>AIC[best_model_idx], <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AIC: 10878.76 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"RMSE:"</span>, <span class="fu">round</span>(final_comparison<span class="sc">$</span>RMSE[best_model_idx], <span class="dv">2</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>RMSE: 29.81 </code></pre>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

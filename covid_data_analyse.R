@@ -7,8 +7,10 @@ library(stats)
 library(corrplot)
 library(gridExtra)
 library(TTR)
+library(seasonal)
+library(vars)
 
-PATH = "C:\\Data\\School\\PRI2\\CAS_covid_data\\covid_timeseries.csv"
+PATH = "covid_timeseries.csv"
 
 Sys.setlocale("LC_TIME", "C")
 
@@ -42,7 +44,7 @@ data <- data.frame(date = dates, location = "Czech Republic", new_cases = new_ca
 # Převod na časovou řadu
 ts_data <- ts(data$new_cases, start = c(2020, 1), frequency = 365.25)
 head(data)
-######################################################################
+#####################################################################################
 ##Grafické zobrazení řady
 # Grafické zobrazení hlavní řady
 p1 <- ggplot(data, aes(x = date, y = new_cases)) +
@@ -68,7 +70,7 @@ grid.arrange(p1, p2, ncol = 1)
 # STL dekompozice
 stl_decomp <- stl(ts_data, s.window = "periodic", t.window = 365)
 plot(stl_decomp, main = "STL dekompozice časové řady nových případů")
-#########################################################################
+######################################################################################
 ##Identifikace trendu pomocí vyhlazení
 # Klouzavé průměry různých řádů
 ma_7 <- SMA(data$new_cases, n = 7)   
@@ -137,7 +139,7 @@ print(summary(trend_component))
 seasonal_component <- stl_decomp$time.series[,"seasonal"]
 cat("\nSouhrn sezónní složky:\n")
 print(summary(seasonal_component))
-##############################################################################
+##########################################################################################
 ##Hledání optimálního funkčního modelu
 # Příprava dat pro regresní model
 data$t <- 1:nrow(data)
@@ -180,7 +182,7 @@ ggplot(data, aes(x = date)) +
        x = "Datum", y = "Počet případů",
        subtitle = paste("Model:", model_names[which.min(comparison$AIC)])) +
   theme_minimal()
-###############################################################################
+###########################################################################################
 ##Hledání optimálního SARIMA modelu
 # Kontrola stacionarity
 adf_test <- adf.test(ts_data)
@@ -221,16 +223,14 @@ BIC(fit1); BIC(fit2); BIC(fit3); BIC(fit4); BIC(fit5); BIC(fit6); BIC(fit7)
 
 (auto_sarima_a <- auto.arima(ts_data)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
 BIC(auto_sarima_a) # automaticky model rozhodne optimalni neni - je prilis komplikovany
-coeftest(auto_sarima_a) # model ma spoustu nevyznamnych clenu
 (auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
-coeftest(auto_sarima_b) # pomoci Bayesovskeho kriteria vybran jednodussi model
 
 # Použijeme auto.arima výsledek jako finální
 final_sarima <- auto_sarima_b
 
 # Diagnostika residuí
 checkresiduals(final_sarima)
-#############################################################################
+#######################################################################################
 ## Analýza závislostí na jiných řadách
 # Příprava dalších časových řad
 other_series <- c("new_deaths", "stringency_index", "hosp_patients", "reproduction_rate")
@@ -347,7 +347,7 @@ for(model_name in names(models_to_check)) {
   qqnorm(residuals, main = paste("Q-Q plot -", model_name))
   qqline(residuals)
 }
-################################################################################
+##########################################################################################
 ##Predikce budoucích hodnot
 # Predikce na 10 období dopředu
 horizon <- 10
@@ -444,7 +444,7 @@ predictions_summary <- data.frame(
 )
 print("Predikce na příštích 10 dní:")
 print(predictions_summary)
-#####################################################################################x
+###############################################################################################
 ##Závěrečné srovnání a doporučení
 # Finální srovnání všech modelů
 final_comparison <- data.frame(
@@ -475,7 +475,7 @@ cat("RMSE:", round(final_comparison$RMSE[best_model_idx], 2), "\n")
 
 
 
-
+######################################################################################
 
 
 
