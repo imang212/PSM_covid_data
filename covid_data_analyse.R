@@ -10,40 +10,81 @@ library(TTR)
 library(seasonal)
 library(vars)
 
-PATH = "covid_timeseries.csv"
-
 Sys.setlocale("LC_TIME", "C")
 
 #Načtení dat
-data <- read.csv(paste(PATH))
+data <- read.csv("covid_timeseries.csv")
+
 
 #Kontrola prázdných sloupců
 prazdne_sloupce <- sapply(data, function(x) all(is.na(x)))
 prazdne_sloupce
 names(data)[prazdne_sloupce]
 
-set.seed(123)
-dates <- seq(as.Date("2020-01-01"), as.Date("2023-12-31"), by = "day")
-n <- length(dates)
+#cat("Struktura načtených dat:\n")
+#str(data)
 
-# Simulace COVID dat s trendem a sezónností
-trend <- seq(0, 500, length.out = n) + rnorm(n, 0, 10)
-seasonal <- 50 * sin(2 * pi * as.numeric(dates) / 365.25) + 30 * sin(2 * pi * as.numeric(dates) / 7)
-new_cases <- pmax(0, trend + seasonal + rnorm(n, 0, 20))
+# Převod datumu na správný formát
+data$date <- as.Date(data$date)
 
-# Další proměnné
-new_deaths <- new_cases * 0.02 + rnorm(n, 0, 2); new_deaths <- pmax(0, new_deaths)
+# Kontrola chybějících hodnot v new_cases
+cat("\nChybějící hodnoty v new_cases:\n")
+missing_summary <- sapply(data$new_cases, function(x) sum(is.na(x)))
+print(missing_summary[missing_summary > 0])
 
-stringency_index <- 30 + 40 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 5)
-stringency_index <- pmin(100, pmax(0, stringency_index))
+cat("\nChybějící hodnoty v dates:\n")
+missing_summary <- sapply(data$date, function(x) sum(is.na(x)))
+print(missing_summary[missing_summary > 0])
 
-hosp_patients <- new_cases * 0.15 + rnorm(n, 0, 5); hosp_patients <- pmax(0, hosp_patients)
+# Kontrola new_cases sloupce
+cat("\nSouhrn new_cases sloupce:\n")
+print(summary(data$new_cases))
 
-data <- data.frame(date = dates, location = "Czech Republic", new_cases = new_cases, new_deaths = new_deaths, stringency_index = stringency_index, hosp_patients = hosp_patients, total_cases = cumsum(new_cases), reproduction_rate = 1 + 0.3 * sin(2 * pi * as.numeric(dates) / 365.25) + rnorm(n, 0, 0.1))
+# Odstranění řádků s chybějícími hodnotami v new_cases
+original_rows <- nrow(data)
+data <- data[!is.na(data$new_cases), ]
+cat("\nOdstraněno", original_rows - nrow(data), "řádků s chybějícími hodnotami v new_cases\n")
 
-# Převod na časovou řadu
-ts_data <- ts(data$new_cases, start = c(2020, 1), frequency = 365.25)
-head(data)
+# Kontrola kontinuity dat (zda nejsou mezery v datech)
+date_range <- range(data$date, na.rm = TRUE)
+expected_days <- as.numeric(diff(date_range)) + 1
+actual_days <- nrow(data)
+
+if(expected_days != actual_days) {
+  cat("V datech jsou mezery, vyplním chybějící data interpolací.\n")
+  # Vytvoření kompletní sekvence dat
+  full_dates <- seq(from = min(data$date), to = max(data$date), by = "day")
+  full_data <- data.frame(date = full_dates)
+  # Spojení s originálními daty
+  data <- merge(full_data, data, by = "date", all.x = TRUE)
+  # Interpolace chybějících hodnot new_cases
+  if(any(is.na(data$new_cases))) {
+    # Lineární interpolace
+    data$new_cases <- approx(x = which(!is.na(data$new_cases)), 
+                             y = data$new_cases[!is.na(data$new_cases)], 
+                             xout = 1:nrow(data), 
+                             rule = 2)$y
+    cat("Provedena lineární interpolace chybějících hodnot\n")
+  }
+}
+
+# Vytvoření časové řady
+tail(data$date, 1)
+start_date <- min(data$date)
+start_year <- as.numeric(format(start_date, "%Y"))
+start_day <- as.numeric(format(start_date, "%j"))
+
+ts_data <- ts(data$new_cases, frequency = 365.25)
+#ts_data <- ts(data$new_cases, frequency = 30)
+#ts_data <- ts(data$new_cases, start = c(start_year, start_day), frequency = 30)
+
+cat("\nČasová řada vytvořena úspěšně!\n")
+cat("Počet pozorování:", length(ts_data), "\n")
+cat("Rozsah hodnot:", round(range(ts_data, na.rm = TRUE), 2), "\n")
+summary(ts_data)
+head(ts_data, 20)
+tail(ts_data, 20)
+
 #####################################################################################
 ##Grafické zobrazení řady
 # Grafické zobrazení hlavní řady
@@ -66,11 +107,11 @@ p2 <- ggplot(data, aes(x = month, y = new_cases)) +
 
 grid.arrange(p1, p2, ncol = 1)
 
+######################################################################################
 ##Dekompozice časové řady
 # STL dekompozice
 stl_decomp <- stl(ts_data, s.window = "periodic", t.window = 365)
 plot(stl_decomp, main = "STL dekompozice časové řady nových případů")
-######################################################################################
 ##Identifikace trendu pomocí vyhlazení
 # Klouzavé průměry různých řádů
 ma_7 <- SMA(data$new_cases, n = 7)   
@@ -104,9 +145,7 @@ trend_data <- data.frame(
 )
 
 # Přidáme ma_365 pouze pokud má dostatek dat
-if(sum(!is.na(ma_365)) > 100) {
-  trend_data$ma_365 <- ma_365
-}
+if(sum(!is.na(ma_365)) > 100) { trend_data$ma_365 <- ma_365 }
 
 # Přidáme exponenciální vyhlazení
 trend_data$exp_smooth <- exp_smooth_full
@@ -156,6 +195,7 @@ model2 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365, data = data)
 model3 <- lm(new_cases ~ t + sin_365 + cos_365 + sin_7 + cos_7, data = data)
 # Model 4: Polynomiální trend + roční + týdenní sezónnost
 model4 <- lm(new_cases ~ poly(t, 2) + sin_365 + cos_365 + sin_7 + cos_7, data = data)
+
 # Srovnání modelů
 models <- list(model1, model2, model3, model4)
 model_names <- c("Lin+Roční", "Poly+Roční", "Lin+Roční+Týdenní", "Poly+Roční+Týdenní")
@@ -209,27 +249,17 @@ if(adf_test$p.value > 0.05) {
   ts_diff <- ts_data
 }
 
-cat("Testování vybraných SARIMA kombinací...\n")
-
-# Vybrané rozumné kombinace na základě ACF/PACF a zkušeností
-(fit1 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(0,1,0))))
-(fit2 <- Arima(ts_data, order = c(0,0,1), seasonal = list(order = c(0,1,0))))
-(fit3 <- Arima(ts_data, order = c(1,0,1), seasonal = list(order = c(0,1,0))))
-(fit4 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,0))))
-(fit5 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(0,1,1))))
-(fit6 <- Arima(ts_data, order = c(0,0,0), seasonal = list(order = c(1,1,1))))
-(fit7 <- Arima(ts_data, order = c(1,0,0), seasonal = list(order = c(1,1,1))))
-BIC(fit1); BIC(fit2); BIC(fit3); BIC(fit4); BIC(fit5); BIC(fit6); BIC(fit7)
-
-(auto_sarima_a <- auto.arima(ts_data)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
-BIC(auto_sarima_a) # automaticky model rozhodne optimalni neni - je prilis komplikovany
-(auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
+cat("Hledání vhodné SARIMA kombinace...\n")
+(auto_sarima_a <- auto.arima(ts_data, seasonal = FALSE)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
+BIC(auto_sarima_a)
+#(auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
 
 # Použijeme auto.arima výsledek jako finální
-final_sarima <- auto_sarima_b
+final_sarima <- auto_sarima_a
 
 # Diagnostika residuí
 checkresiduals(final_sarima)
+
 #######################################################################################
 ## Analýza závislostí na jiných řadách
 # Příprava dalších časových řad
@@ -270,7 +300,7 @@ for(series in names(ccf_results)) {
     print(significant_lags[[series]])
   }
 }
-
+########################################################################
 # Příprava zpožděných proměnných na základě CCF analýzy
 data$deaths_lag <- c(rep(NA, 1), data$new_deaths[1:(nrow(data)-1)])
 data$stringency_lag <- c(rep(NA, 5), data$stringency_index[1:(nrow(data)-5)])
@@ -285,10 +315,11 @@ external_vars <- cbind(
 
 # Odstranění NA hodnot
 complete_idx <- complete.cases(cbind(data$new_cases, external_vars))
-ts_complete <- ts(data$new_cases[complete_idx], start = c(2020, 1), frequency = 365.25)
+ts_complete <- ts(data$new_cases[complete_idx], frequency = 7)
 external_complete <- external_vars[complete_idx, ]
 
 # ARIMAX model
+cat("Vyhodnocení ARIMAX modelu: \n")
 arimax_model <- auto.arima(ts_complete, xreg = external_complete)
 print(summary(arimax_model))
 
@@ -297,14 +328,17 @@ var_data <- data[complete_idx, c("new_cases", "new_deaths", "stringency_index", 
 var_data <- var_data[complete.cases(var_data), ]
 
 # Optimální lag pro VAR
+cat("Vyhodnocení selekce VAR modelu:\n")
 var_select <- VARselect(var_data, lag.max = 10, type = "both")
 print(var_select$selection)
 
+cat("Vyhodnocení VAR modelu:")
 optimal_lag <- var_select$selection["AIC(n)"]
 var_model <- VAR(var_data, p = optimal_lag, type = "both")
 print(summary(var_model))
 
 # Srovnání modelů
+cat("Srovnání všech modelů: \n")
 models_comparison <- data.frame(
   Model = c("Funkční", "SARIMA", "ARIMAX", "VAR"),
   AIC = c(AIC(best_func_model), AIC(final_sarima), AIC(arimax_model), AIC(var_model)),
@@ -364,20 +398,17 @@ future_data <- data.frame(
 pred_func <- tryCatch({
   predict(best_func_model, newdata = future_data, interval = "prediction")
 }, error = function(e) {
-  cat("Chyba při predikci funkčního modelu:", e$message, "\n")
-  # Náhradní predikce - jen fit bez intervalů
-  fit_values <- predict(best_func_model, newdata = future_data)
-  # Vytvoříme jednoduché intervaly na základě residuální std. chyby
-  residual_se <- summary(best_func_model)$sigma
-  cbind(fit = fit_values, 
-        lwr = fit_values - 1.96 * residual_se, 
-        upr = fit_values + 1.96 * residual_se)
+  cat("Chyba při funkční predikci:", e$message, "\n")
+  # Náhradní simple predikce
+  last_value <- tail(data$new_cases, 1)
+  matrix(rep(last_value, 3*horizon), nrow = horizon, ncol = 3,
+         dimnames = list(NULL, c("fit", "lwr", "upr")))
 })
 
 cat("Funkční model - predikce dokončena\n")
-
 # SARIMA predikce
 pred_sarima <- forecast(final_sarima, h = horizon)
+cat("SARIMA predikce dokončena\n")
 
 # ARIMAX predikce (potřebujeme budoucí hodnoty externích proměnných)
 # Pro zjednodušení použijeme poslední dostupné hodnoty
@@ -398,11 +429,33 @@ pred_arimax <- tryCatch({
   # Náhradní predikce bez externích regresorů
   forecast(final_sarima, h = horizon)
 })
-
 cat("ARIMAX predikce dokončena\n")
+
+tail(data$date, 1)        # poslední datum v datech
+max(data$date)            # to samé
+future_dates              # zda opravdu navazuje (mělo by začínat 2022-01-06)
+length(future_data)      # = horizon
+
+cat("\nFunkční model predikce:\n")
+print(pred_func)
+
+cat("\nSARIMA predikce (mean, lower, upper):\n")
+print(pred_sarima$mean)
+print(head(pred_sarima$lower))
+print(head(pred_sarima$upper))
+
+cat("\nARIMAX predikce (mean, lower, upper):\n")
+print(pred_arimax$mean)
+print(head(pred_arimax$lower))
+print(head(pred_arimax$upper))
 
 # Grafické zobrazení predikcí
 future_dates <- seq(max(data$date) + 1, by = "day", length.out = horizon)
+
+cat("future_dates:", length(future_dates), "\n")
+cat("pred_func:", nrow(pred_func), "\n")
+cat("sarima:", length(pred_sarima$mean), "\n")
+cat("arimax:", length(pred_arimax$mean), "\n")
 
 # Příprava dat pro graf
 plot_data <- data.frame(
@@ -418,15 +471,14 @@ plot_data <- data.frame(
   arimax_lower = c(rep(NA, 50), pred_arimax$lower[,2]),
   arimax_upper = c(rep(NA, 50), pred_arimax$upper[,2])
 )
-
 # Graf predikcí
 ggplot(plot_data, aes(x = date)) +
-  geom_line(aes(y = actual), color = "black", size = 1, alpha = 0.8) +
-  geom_line(aes(y = func_pred), color = "red", size = 1) +
+  geom_line(aes(y = actual), color = "black", size = 1, alpha = 0.8, na.rm = TRUE) +
+  geom_line(aes(y = func_pred), color = "red", size = 1, na.rm = TRUE) +
   geom_ribbon(aes(ymin = func_lower, ymax = func_upper), fill = "red", alpha = 0.2) +
-  geom_line(aes(y = sarima_pred), color = "blue", size = 1) +
+  geom_line(aes(y = sarima_pred), color = "blue", size = 1,, na.rm = TRUE) +
   geom_ribbon(aes(ymin = sarima_lower, ymax = sarima_upper), fill = "blue", alpha = 0.2) +
-  geom_line(aes(y = arimax_pred), color = "green", size = 1) +
+  geom_line(aes(y = arimax_pred), color = "green", size = 1,, na.rm = TRUE) +
   geom_ribbon(aes(ymin = arimax_lower, ymax = arimax_upper), fill = "green", alpha = 0.2) +
   geom_vline(xintercept = max(data$date), linetype = "dashed", alpha = 0.5) +
   labs(title = "Predikce nových případů - srovnání modelů",
@@ -444,6 +496,7 @@ predictions_summary <- data.frame(
 )
 print("Predikce na příštích 10 dní:")
 print(predictions_summary)
+
 ###############################################################################################
 ##Závěrečné srovnání a doporučení
 # Finální srovnání všech modelů
