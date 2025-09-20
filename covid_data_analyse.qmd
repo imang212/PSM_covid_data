@@ -45,16 +45,14 @@ data <- read.csv("covid_timeseries.csv")
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 20, fig.height = 6)
 ```
 
-### Kontrola prázdných sloupců
-
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
 #Kontrola prázdných sloupců
-prazdne_sloupce <- sapply(data, function(x) all(is.na(x)))
-prazdne_sloupce
-names(data)[prazdne_sloupce]
+#prazdne_sloupce <- sapply(data, function(x) all(is.na(x)))
+#prazdne_sloupce
+#names(data)[prazdne_sloupce]
 ```
 
 ## Úvod
@@ -77,11 +75,11 @@ data$date <- as.Date(data$date)
 # Kontrola chybějících hodnot v new_cases
 cat("\nChybějící hodnoty v new_cases:\n")
 missing_summary <- sapply(data$new_cases, function(x) sum(is.na(x)))
-print(missing_summary[missing_summary > 0])
+print(head(missing_summary[missing_summary > 0]))
 
 cat("\nChybějící hodnoty v dates:\n")
 missing_summary <- sapply(data$date, function(x) sum(is.na(x)))
-print(missing_summary[missing_summary > 0])
+print(head(missing_summary[missing_summary > 0]))
 
 # Kontrola new_cases sloupce
 cat("\nSouhrn new_cases sloupce:\n")
@@ -92,28 +90,54 @@ original_rows <- nrow(data)
 data <- data[!is.na(data$new_cases), ]
 cat("\nOdstraněno", original_rows - nrow(data), "řádků s chybějícími hodnotami v new_cases\n")
 
-# Kontrola kontinuity dat (zda nejsou mezery v datech)
-date_range <- range(data$date, na.rm = TRUE)
-expected_days <- as.numeric(diff(date_range)) + 1
-actual_days <- nrow(data)
+# Vytvoření měsíc-rok proměnné
+data$year_month <- format(data$date, "%Y-%m")
+data$year <- as.numeric(format(data$date, "%Y"))
+data$month <- as.numeric(format(data$date, "%m"))
 
-if(expected_days != actual_days) {
-  cat("V datech jsou mezery, vyplním chybějící data interpolací.\n")
-  # Vytvoření kompletní sekvence dat
-  full_dates <- seq(from = min(data$date), to = max(data$date), by = "day")
-  full_data <- data.frame(date = full_dates)
-  # Spojení s originálními daty
-  data <- merge(full_data, data, by = "date", all.x = TRUE)
-  # Interpolace chybějících hodnot new_cases
-  if(any(is.na(data$new_cases))) {
-    # Lineární interpolace
-    data$new_cases <- approx(x = which(!is.na(data$new_cases)), 
-                            y = data$new_cases[!is.na(data$new_cases)], 
-                            xout = 1:nrow(data), 
-                            rule = 2)$y
-    cat("Provedena lineární interpolace chybějících hodnot\n")
-  }
-}
+# Agregace na měsíční součty
+monthly_data <- data %>%
+  group_by(year, month, year_month) %>%
+  summarise(
+    new_cases = sum(new_cases, na.rm = TRUE),
+    new_deaths = sum(new_deaths, na.rm = TRUE),
+    stringency_index = mean(stringency_index, na.rm = TRUE),
+    hosp_patients = mean(hosp_patients, na.rm = TRUE),
+    reproduction_rate = mean(reproduction_rate, na.rm = TRUE),
+    date = max(date),  # poslední den měsíce jako reprezentant
+    .groups = 'drop'
+  ) %>%
+  arrange(year, month)
+
+cat("Počet měsíčních pozorování:", nrow(monthly_data), "\n")
+cat("Rozsah dat:", range(monthly_data$date), "\n")
+
+# Aktualizace hlavní data proměnné
+data <- monthly_data
+
+## Kontrola kontinuity dat (zda nejsou mezery v datech)
+#date_range <- range(data$date, na.rm = TRUE)
+#expected_days <- as.numeric(diff(date_range)) + 1
+#actual_days <- nrow(data)
+#
+#
+#if(expected_days != actual_days) {
+#  cat("V datech jsou mezery, vyplním chybějící data interpolací.\n")
+#  # Vytvoření kompletní sekvence dat
+#  full_dates <- seq(from = min(data$date), to = max(data$date), by = #"day")
+#  full_data <- data.frame(date = full_dates)
+#  # Spojení s originálními daty
+#  data <- merge(full_data, data, by = "date", all.x = TRUE)
+#  # Interpolace chybějících hodnot new_cases
+#  if(any(is.na(data$new_cases))) {
+#    # Lineární interpolace
+#    data$new_cases <- approx(x = which(!is.na(data$new_cases)), 
+#                            y = #data$new_cases[!is.na(data$new_cases)], 
+#                            xout = 1:nrow(data), 
+#                            rule = 2)$y
+#    cat("Provedena lineární interpolace chybějících hodnot\n")
+#  }
+#}
   
 # Vytvoření časové řady
 cat("Data začínají od: ",as.numeric(format(min(data$date), "%d")) , as.numeric(format(min(data$date), "%m")), as.numeric(format(min(data$date), "%Y")), "\n")
@@ -124,13 +148,12 @@ Nejdřív než se data převedli na časovou řadu, zkontrolovalo se, jestli nej
 
 ```{r}
 tail(data$date, 1)
-start_date <- min(data$date)
-start_year <- as.numeric(format(start_date, "%Y"))
-start_day <- as.numeric(format(start_date, "%j"))
+start_year <- min(data$year)
+start_month <- min(data$month[data$year == start_year])
 
 #ts_data <- ts(data$new_cases, frequency = 365.25)
 #ts_data <- ts(data$new_cases, frequency = 30)
-ts_data <- ts(data$new_cases, start = c(start_year, start_day), frequency = 365.25)
+ts_data <- ts(data$new_cases, start = c(start_year, start_month), frequency = 12)
 
 cat("\nČasová řada vytvořena úspěšně!\n")
 cat("Počet pozorování:", length(ts_data), "\n")
@@ -138,6 +161,11 @@ cat("Rozsah hodnot:", round(range(ts_data, na.rm = TRUE), 2), "\n")
 summary(ts_data)
 head(ts_data, 20)
 tail(ts_data, 20)
+
+if(any(is.na(ts_data))) {
+    cat("CHYBA: Časová řada stále obsahuje NA hodnoty!\n")
+    ts_data <- ts_data[!is.na(ts_data)]
+}
 ```
 
 Vytvořili jsme časovou řadu v určitém daném rozmezí.
@@ -151,21 +179,21 @@ p1 <- ggplot(data, aes(x = date, y = new_cases)) +
   geom_smooth(method = "loess", color = "red", se = FALSE) +
   labs(title = "Vývoj nových případů COVID-19",
        x = "Datum", y = "Počet nových případů",
-       subtitle = "Denní data s trendem (červená linie)") +
-  theme_minimal()
+       subtitle = "Měsíční agregace denních dat s trendem (červená linie)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Boxplot podle měsíců pro identifikaci sezónnosti
-data$month <- factor(month(data$date), labels = month.abb)
-p2 <- ggplot(data, aes(x = month, y = new_cases)) +
+p2 <- ggplot(data, aes(x = factor(month), y = new_cases)) +
   geom_boxplot(fill = "lightblue", alpha = 0.7) +
-  labs(title = "Sezónní rozdělení nových případů",
+  geom_point(alpha = 0.4, position = position_jitter(width = 0.2)) +
+  scale_x_discrete(labels = month.abb) +
+  labs(title = "Sezónní rozdělení měsíčních případů",
        x = "Měsíc", y = "Počet nových případů") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 grid.arrange(p1, p2, ncol = 1)
-
-
 ```
 
 ## Dekompozice a identifikace trendu
@@ -192,8 +220,8 @@ Výsledky říkají, která metoda nejlépe zachycuje základní trend, jak siln
 ```{r}
 # Klouzavé průměry různých řádů
 ma_7 <- SMA(data$new_cases, n = 7)   
-ma_30 <- SMA(data$new_cases, n = 30) 
-ma_365 <- SMA(data$new_cases, n = 365) 
+ma_30 <- SMA(data$new_cases, n = 12) 
+ma_365 <- SMA(data$new_cases, n = 30) 
 
 # Exponenciální vyrovnání - jednodušší přístup
 exp_smooth_model <- HoltWinters(ts_data, gamma = FALSE)
@@ -266,8 +294,8 @@ Testování různých modelů s kombinacemi, jejich srovnání a grafické zobra
 ```{r}
 # Příprava dat pro regresní model
 data$t <- 1:nrow(data)
-data$sin_365 <- sin(2 * pi * data$t / 365.25)
-data$cos_365 <- cos(2 * pi * data$t / 365.25)
+data$sin_365 <- sin(2 * pi * data$t / 12)
+data$cos_365 <- cos(2 * pi * data$t / 12)
 data$sin_7 <- sin(2 * pi * data$t / 7)
 data$cos_7 <- cos(2 * pi * data$t / 7)
 
@@ -355,12 +383,46 @@ if(adf_test$p.value > 0.05) {
 
 ```{r}
 cat("Hledání vhodné SARIMA kombinace...\n")
-(auto_sarima_a <- auto.arima(ts_data, seasonal = FALSE)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
+(auto_sarima_a <- auto.arima(ts_data, seasonal = TRUE)) #sezonní diference Zt = 0.004 + 0156*Zt-1 + 0.09*Et-1 + 0.11*Et-2 - 0.53Zt-1
 BIC(auto_sarima_a)
 #(auto_sarima_b <- auto.arima(ts_data, ic = "bic"))
 
-# Použijeme auto.arima výsledek jako finální
-final_sarima <- auto_sarima_a
+selected_sarima <- tryCatch({
+  arima(ts_data, 
+        order = c(1, 1, 1),
+        seasonal = list(order = c(1, 1, 1), period = 12))  # period = 12 pro měsíce
+}, error = function(e) {
+  cat("Hlavní SARIMA model selhal:", e$message, "\n")
+  # Jednodušší fallback
+  arima(ts_data, order = c(0, 1, 1))
+})
+alternative_sarima <- tryCatch({
+  arima(ts_data, 
+        order = c(0, 1, 1),
+        seasonal = list(order = c(1, 1, 0), period = 12))
+}, error = function(e) {
+  cat("Alternativní model selhal:", e$message, "\n")
+  return(NULL)
+})
+
+if(!is.null(alternative_sarima)) {
+  aic1 <- AIC(selected_sarima)
+  aic2 <- AIC(alternative_sarima)
+  
+  cat("SARIMA(1,1,1)x(1,1,1)[12] AIC:", round(aic1, 2), "\n")
+  cat("SARIMA(0,1,1)x(1,1,0)[12] AIC:", round(aic2, 2), "\n")
+  
+  if(aic2 < aic1) {
+    final_sarima <- alternative_sarima
+    cat("Lepší je alternativní model.\n")
+  } else {
+    final_sarima <- selected_sarima
+    cat("Lepší je původní model.\n")
+  }
+} else {
+  final_sarima <- selected_sarima
+  cat("Používám původní SARIMA model pro měsíční data.\n")
+}
 
 # Diagnostika residuí
 checkresiduals(final_sarima)
@@ -380,7 +442,7 @@ other_series <- c("new_deaths", "stringency_index", "hosp_patients", "reproducti
 
 # Křížová korelace s různými zpožděními
 ccf_results <- list()
-max_lag <- 30
+max_lag <- 12
 
 par(mfrow = c(2,2))
 for(i in 1:length(other_series)) {
@@ -410,7 +472,7 @@ for(series in names(ccf_results)) {
       correlation = ccf_vals[significant_idx]
     )
     print(paste("Významné korelace pro", series, ":"))
-    print(significant_lags[[series]])
+    print(head(significant_lags[[series]]))
   }
 }
 
@@ -437,35 +499,22 @@ external_vars <- cbind(
 
 # Odstranění NA hodnot
 complete_idx <- complete.cases(cbind(data$new_cases, external_vars))
-ts_complete <- ts(data$new_cases[complete_idx], frequency = 7)
+ts_complete <- ts(data$new_cases[complete_idx], start = c(start_year, start_month), frequency = 365.25)
 external_complete <- external_vars[complete_idx, ]
 
 # ARIMAX model
-cat("Vyhodnocení ARIMAX modelu: \n")
 arimax_model <- auto.arima(ts_complete, xreg = external_complete)
 print(summary(arimax_model))
-
-# VAR model pro srovnání
-var_data <- data[complete_idx, c("new_cases", "new_deaths", "stringency_index", "hosp_patients")]
-var_data <- var_data[complete.cases(var_data), ]
-
-# Optimální lag pro VAR
-cat("Vyhodnocení selekce VAR modelu:\n")
-var_select <- VARselect(var_data, lag.max = 10, type = "both")
-print(var_select$selection)
-
-cat("Vyhodnocení VAR modelu:")
-optimal_lag <- var_select$selection["AIC(n)"]
-var_model <- VAR(var_data, p = optimal_lag, type = "both")
-print(summary(var_model))
+length(fitted(arimax_model))
 
 # Srovnání modelů
 cat("Srovnání všech modelů: \n")
 models_comparison <- data.frame(
-  Model = c("Funkční", "SARIMA", "ARIMAX", "VAR"),
-  AIC = c(AIC(best_func_model), AIC(final_sarima), AIC(arimax_model), AIC(var_model)),
-  BIC = c(BIC(best_func_model), BIC(final_sarima), BIC(arimax_model), BIC(var_model))
+  Model = c("Funkční", "SARIMA", "ARIMAX"),
+  AIC = c(AIC(best_func_model), AIC(final_sarima), AIC(arimax_model)),
+  BIC = c(BIC(best_func_model), BIC(final_sarima), BIC(arimax_model))
 )
+
 print(models_comparison)
 ```
 
@@ -501,7 +550,9 @@ for(model_name in names(models_to_check)) {
   lb_test <- Box.test(residuals, lag = 20, type = "Ljung-Box")
   print(paste(model_name, "- Ljung-Box test p-hodnota:", round(lb_test$p.value, 4)))
   # Normalita residuí
-  shapiro_test <- shapiro.test(sample(residuals, min(5000, length(residuals))))
+  
+shapiro_test <- shapiro.test(sample(residuals, min(5000, length(residuals))))
+
   print(paste(model_name, "- Shapiro test p-hodnota:", round(shapiro_test$p.value, 4)))
 }
 
@@ -526,6 +577,18 @@ Srovnáme Funkční model, SARIMA model a ARIMAX model. Vytvoříme Grafické sr
 ```{r}
 # Predikce na 10 období dopředu
 horizon <- 10
+# Kontrola kvality modelů před predikcí
+cat("Kontrola SARIMA modelu:\n")
+cat("Koeficienty:", coef(final_sarima), "\n")
+cat("Sigma2:", final_sarima$sigma2, "\n")
+cat("Loglik:", final_sarima$loglik, "\n")
+# Kontrola časové řady
+cat("\nKontrola časové řady pro predikci:\n")
+cat("Délka:", length(ts_data), "\n")
+cat("Start:", paste(start(ts_data), collapse = ", "), "\n")
+cat("Frequency:", frequency(ts_data), "\n")
+cat("Posledních 5 hodnot:", tail(ts_data, 5), "\n")
+
 # Funkční model predikce
 future_t <- (nrow(data)+1):(nrow(data)+horizon)
 future_data <- data.frame(
@@ -536,18 +599,20 @@ future_data <- data.frame(
   cos_7 = cos(2 * pi * future_t / 7)
 )
 # Jednoduchá predikce bez složitého rozlišování modelů
-pred_func <- tryCatch({
-  predict(best_func_model, newdata = future_data, interval = "prediction")
-}, error = function(e) {
-  cat("Chyba při funkční predikci:", e$message, "\n")
-  # Náhradní simple predikce
-  last_value <- tail(data$new_cases, 1)
-  matrix(rep(last_value, 3*horizon), nrow = horizon, ncol = 3,
-         dimnames = list(NULL, c("fit", "lwr", "upr")))
-})
-
+pred_func <- predict(best_func_model, newdata = future_data, interval = "prediction")
 cat("Funkční model - predikce dokončena\n")
 # SARIMA predikce
+if(is.null(final_sarima) || any(is.na(coef(final_sarima)))) {
+  cat("SARIMA model je nevalidní! Vytvářím nový jednoduchý model...\n")
+  simple_ts <- ts(data$new_cases[!is.na(data$new_cases)], frequency = 1)
+  final_sarima <- tryCatch({
+    arima(simple_ts, order = c(1, 1, 1))
+  }, error = function(e) {
+    cat("I jednoduchý ARIMA selhal:", e$message, "\n")
+    arima(simple_ts, order = c(0, 1, 0))  # random walk
+  })
+}
+
 pred_sarima <- forecast(final_sarima, h = horizon)
 cat("SARIMA predikce dokončena\n")
 
@@ -557,19 +622,12 @@ last_external <- external_complete[nrow(external_complete), , drop = FALSE]
 future_external <- matrix(rep(as.numeric(last_external), horizon), 
                           nrow = horizon, byrow = TRUE)
 
-# Zajistíme správné názvy sloupců
 colnames(future_external) <- colnames(external_complete)
+
 
 cat("Názvy sloupců v trénovacích datech:", colnames(external_complete), "\n")
 cat("Názvy sloupců v predikčních datech:", colnames(future_external), "\n")
-
-pred_arimax <- tryCatch({
-  forecast(arimax_model, xreg = future_external, h = horizon)
-}, error = function(e) {
-  cat("Chyba při ARIMAX predikci:", e$message, "\n")
-  # Náhradní predikce bez externích regresorů
-  forecast(final_sarima, h = horizon)
-})
+pred_arimax = forecast(arimax_model, xreg = future_external, h = horizon)
 cat("ARIMAX predikce dokončena\n")
 ```
 
@@ -577,72 +635,130 @@ cat("ARIMAX predikce dokončena\n")
 
 ```{r}
 tail(data$date, 1)        # poslední datum v datech
-max(data$date)            # to samé
-
-cat("\nFunkční model predikce:\n")
-print(pred_func)
-
-cat("\nSARIMA predikce (mean, lower, upper):\n")
-print(pred_sarima$mean)
-print(head(pred_sarima$lower))
-print(head(pred_sarima$upper))
-
-cat("\nARIMAX predikce (mean, lower, upper):\n")
-print(pred_arimax$mean)
-print(head(pred_arimax$lower))
-print(head(pred_arimax$upper))
 ```
 
 ```{r}
 # Grafické zobrazení predikcí
 future_dates <- seq(max(data$date) + 1, by = "day", length.out = horizon)
-future_dates             # zda opravdu navazuje (mělo by začínat 2022-01-06)
-length(future_dates)      # = horizon
+
+cat("Budoucí data:", as.character(future_dates[1:3]), "...\n")
+
+# === KONTROLA PŘED GRAFEM ===
+cat("\n=== FINÁLNÍ KONTROLA ===\n")
+cat("Funkční - rozsah:", range(pred_func[,1]), "\n") 
+cat("SARIMA - rozsah:", range(pred_sarima$mean), "\n")
+cat("ARIMAX - rozsah:", range(pred_arimax$mean), "\n")
+
+# Test na nuly
+if(all(pred_sarima$mean == 0)) {
+  cat("PROBLÉM: SARIMA predikuje samé nuly!\n")
+  cat("Poslední hodnota v časové řadě:", tail(as.numeric(ts_data), 1), "\n")
+  cat("Model summary:\n")
+  print(summary(final_sarima))
+  # Oprava: použij poslední hodnotu
+  pred_sarima$mean <- rep(tail(as.numeric(ts_data), 1), horizon)
+  pred_sarima$lower[,2] <- pred_sarima$mean * 0.8
+  pred_sarima$upper[,2] <- pred_sarima$mean * 1.2
+}
 
 
-cat("future_dates:", length(future_dates), "\n")
-cat("pred_func:", nrow(pred_func), "\n")
-cat("sarima:", length(pred_sarima$mean), "\n")
-cat("arimax:", length(pred_arimax$mean), "\n")
+# Určíme počet historických pozorování k zobrazení (posledních 24 měsíců nebo méně)
+last_n_obs <- 12  
+cat("Zobrazím posledních", last_n_obs, "měsíčních pozorování\n")
+if(nrow(data) < last_n_obs) last_n_obs <- nrow(data);
 
-# Příprava dat pro graf
-plot_data <- data.frame(
-  date = c(tail(data$date, 50), future_dates),
-  actual = c(tail(data$new_cases, 50), rep(NA, horizon)),
-  func_pred = c(rep(NA, 50), pred_func[,1]),
-  func_lower = c(rep(NA, 50), pred_func[,2]),
-  func_upper = c(rep(NA, 50), pred_func[,3]),
-  sarima_pred = c(rep(NA, 50), pred_sarima$mean),
-  sarima_lower = c(rep(NA, 50), pred_sarima$lower[,2]),
-  sarima_upper = c(rep(NA, 50), pred_sarima$upper[,2]),
-  arimax_pred = c(rep(NA, 50), pred_arimax$mean),
-  arimax_lower = c(rep(NA, 50), pred_arimax$lower[,2]),
-  arimax_upper = c(rep(NA, 50), pred_arimax$upper[,2])
+
+# Historická data
+historical_dates <- tail(data$date, last_n_obs)
+historical_values <- tail(data$new_cases, last_n_obs)
+
+# Kontrola, že predikce mají správnou délku a nejsou NA
+pred_func_clean <- pred_func[,1]
+pred_func_lower <- pred_func[,2] 
+pred_func_upper <- pred_func[,3]
+
+pred_sarima_clean <- as.numeric(pred_sarima$mean)
+pred_sarima_lower <- as.numeric(pred_sarima$lower[,2])
+pred_sarima_upper <- as.numeric(pred_sarima$upper[,2])
+
+pred_arimax_clean <- as.numeric(pred_arimax$mean)
+pred_arimax_lower <- as.numeric(pred_arimax$lower[,2])
+pred_arimax_upper <- as.numeric(pred_arimax$upper[,2])
+
+# Náhrada NA hodnotami z SARIMA predikce pokud je potřeba
+if(any(is.na(pred_func_clean))) {
+  cat("Opravuji NA v funkčních predikcích\n")
+  pred_func_clean[is.na(pred_func_clean)] <- pred_sarima$mean[is.na(pred_func_clean)]
+  pred_func_lower[is.na(pred_func_lower)] <- pred_sarima$lower[is.na(pred_func_lower),2]
+  pred_func_upper[is.na(pred_func_upper)] <- pred_sarima$upper[is.na(pred_func_upper),2]
+}
+
+# Vytvoření clean dat pro ggplot
+plot_data_clean <- data.frame(
+  date = c(historical_dates, future_dates),
+  actual = c(historical_values, rep(NA, horizon)),
+  
+  # Funkční model
+  func_pred = c(rep(NA, last_n_obs), pred_func_clean),
+  func_lower = c(rep(NA, last_n_obs), pred_func_lower),
+  func_upper = c(rep(NA, last_n_obs), pred_func_upper),
+  
+  # SARIMA model  
+  sarima_pred = c(rep(NA, last_n_obs), as.numeric(pred_sarima$mean)),
+  sarima_lower = c(rep(NA, last_n_obs), as.numeric(pred_sarima$lower[,2])),
+  sarima_upper = c(rep(NA, last_n_obs), as.numeric(pred_sarima$upper[,2])),
+  
+  # ARIMAX model
+  arimax_pred = c(rep(NA, last_n_obs), as.numeric(pred_arimax$mean)),
+  arimax_lower = c(rep(NA, last_n_obs), as.numeric(pred_arimax$lower[,2])),
+  arimax_upper = c(rep(NA, last_n_obs), as.numeric(pred_arimax$upper[,2]))
 )
-# Graf predikcí
-ggplot(plot_data, aes(x = date)) +
-  geom_line(aes(y = actual), color = "black", size = 1, alpha = 0.8, na.rm = TRUE) +
-  geom_line(aes(y = func_pred), color = "red", size = 1, na.rm = TRUE) +
-  geom_ribbon(aes(ymin = func_lower, ymax = func_upper), fill = "red", alpha = 0.2) +
-  geom_line(aes(y = sarima_pred), color = "blue", size = 1,, na.rm = TRUE) +
-  geom_ribbon(aes(ymin = sarima_lower, ymax = sarima_upper), fill = "blue", alpha = 0.2) +
-  geom_line(aes(y = arimax_pred), color = "green", size = 1,, na.rm = TRUE) +
-  geom_ribbon(aes(ymin = arimax_lower, ymax = arimax_upper), fill = "green", alpha = 0.2) +
-  geom_vline(xintercept = max(data$date), linetype = "dashed", alpha = 0.5) +
-  labs(title = "Predikce nových případů - srovnání modelů",
-       x = "Datum", y = "Počet případů",
-       subtitle = "Červená: Funkční model, Modrá: SARIMA, Zelená: ARIMAX") +
+
+# Kontrola finálních dat
+cat("Kontrola plot_data_clean:\n")
+cat("Počet řádků:", nrow(plot_data_clean), "\n")
+cat("NA v actual:", sum(is.na(plot_data_clean$actual)), "\n")
+cat("NA v func_pred:", sum(is.na(plot_data_clean$func_pred)), "\n")
+cat("NA v sarima_pred:", sum(is.na(plot_data_clean$sarima_pred)), "\n")
+
+```
+
+```{r}
+# Vylepšený graf predikcí
+prediction_plot <- ggplot(plot_data_clean, aes(x = date)) +
+  # Historická data - body a čáry
+  geom_line(aes(y = actual), color = "black", size = 1.2, alpha = 0.8, na.rm = TRUE) +
+  geom_point(aes(y = actual), color = "black", size = 2, alpha = 0.7, na.rm = TRUE) +
+  # Funkční model
+  geom_line(aes(y = func_pred), color = "red", size = 1.2, na.rm = TRUE) +
+  geom_point(aes(y = func_pred), color = "red", size = 2, na.rm = TRUE) +
+  geom_ribbon(aes(ymin = func_lower, ymax = func_upper), fill = "red", alpha = 0.2, na.rm = TRUE) +
+  # SARIMA model
+  geom_line(aes(y = sarima_pred), color = "blue", size = 1.2, na.rm = TRUE) +
+  geom_point(aes(y = sarima_pred), color = "blue", size = 2, na.rm = TRUE) +
+  geom_ribbon(aes(ymin = sarima_lower, ymax = sarima_upper), fill = "blue", alpha = 0.2, na.rm = TRUE) +
+  # ARIMAX model
+  geom_line(aes(y = arimax_pred), color = "green", size = 1.2, na.rm = TRUE) +
+  geom_point(aes(y = arimax_pred), color = "green", size = 2, na.rm = TRUE) +
+  geom_ribbon(aes(ymin = arimax_lower, ymax = arimax_upper), fill = "green", alpha = 0.2, na.rm = TRUE) +
+  # Vertikální čára oddělující historii od predikcí
+  geom_vline(xintercept = max(historical_dates), linetype = "dashed", alpha = 0.7, color = "gray50", size = 1) +
+  # Lepší popisky a téma
+  labs(title = "Predikce měsíčních nových případů - srovnání modelů", x = "Datum", y = "Počet případů (měsíčně)",
+       subtitle = paste("Historická data (černá) | Predikce: Funkční (červená), SARIMA (modrá), ARIMAX (zelená)", "\nPřerušovaná čára označuje konec historických dat")) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none", plot.title = element_text(size = 14, hjust = 0.5, face = "bold"), plot.subtitle = element_text(size = 11, hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1), panel.grid.minor = element_blank())
+#  # Rozumné limity osy y
+#  + coord_cartesian(ylim = c(0, max(c(historical_values, #pred_func_clean, pred_sarima, pred_arimax_clean), na.rm = TRUE) * #1.1))
 
-# Výpis číselných predikcí
-predictions_summary <- data.frame(
-  Datum = future_dates,
-  Funkční = round(pred_func[,1], 0),
-  SARIMA = round(pred_sarima$mean, 0),
-  ARIMAX = round(pred_arimax$mean, 0)
-)
-print("Predikce na příštích 10 dní:")
+print(prediction_plot)
+
+# Číselný souhrn predikcí
+cat("\n=== ČÍSELNÉ PREDIKCE (měsíční hodnoty) ===\n")
+predictions_summary <- data.frame(Měsíc = future_dates, Funkční = round(pred_func_clean, 0), SARIMA = round(pred_sarima_clean, 0), ARIMAX = round(pred_arimax_clean, 0))
+
+print("Predikce na příštích 10 měsíců:")
 print(predictions_summary)
 ```
 
@@ -680,5 +796,3 @@ cat("Nejlepší model podle AIC:", best_model_name, "\n")
 cat("AIC:", round(final_comparison$AIC[best_model_idx], 2), "\n")
 cat("RMSE:", round(final_comparison$RMSE[best_model_idx], 2), "\n")
 ```
-
-#### Závěr
